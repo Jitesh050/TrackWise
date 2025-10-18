@@ -1,0 +1,25 @@
+{
+  "name": "priority-tickets-backend",
+  "version": "1.0.0",
+  "description": "Backend API for priority ticket management",
+  "main": "priority-tickets-server.js",
+  "scripts": {
+    "start": "node priority-tickets-server.js",
+    "dev": "nodemon priority-tickets-server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "keywords": [
+    "priority-tickets",
+    "railway",
+    "api"
+  ],
+  "author": "Railway System",
+  "license": "MIT"
+}
