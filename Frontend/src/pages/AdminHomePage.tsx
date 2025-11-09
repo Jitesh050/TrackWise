@@ -37,6 +37,13 @@ const AdminHomePage = () => {
     delayedTrains: 5
   };
 
+  // Key metrics displayed on the right of the Collision Detection section
+  const totalTrains = 100;
+  const onTimePercent = 78.2;
+  const activeStations = 25;
+  const totalStations = 25;
+  const passengerLoad = 67;
+
   // Mock collision detection data
   const collisionWarnings = [
     {
@@ -84,52 +91,83 @@ const AdminHomePage = () => {
           <CardContent>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Live Map Area */}
-              <div className="bg-gray-100 rounded-lg h-80 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50">
+              <div className="bg-gray-100 rounded-lg h-80 relative overflow-hidden cursor-pointer">
+                {/* Click Overlay Anchor to open simulation in new tab */}
+                <a
+                  href="https://trackwisesimulation.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClickCapture={(e) => { e.stopPropagation(); }}
+                  onClick={(e) => { e.stopPropagation(); }}
+                  onMouseDown={(e) => { e.stopPropagation(); }}
+                  className="absolute inset-0 z-50 block focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  aria-label="Open TrackWise Simulation"
+                  title="Open TrackWise Simulation"
+                >
+                  <span className="sr-only">Open TrackWise Simulation</span>
+                </a>
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50 pointer-events-none">
                   {/* Simulated Railway Lines */}
-                  <svg className="absolute inset-0 w-full h-full">
+                  <svg className="absolute inset-0 w-full h-full pointer-events-none">
                     <line x1="10%" y1="50%" x2="90%" y2="20%" stroke="#4B5563" strokeWidth="3" strokeDasharray="5,5" />
                     <line x1="20%" y1="80%" x2="80%" y2="30%" stroke="#4B5563" strokeWidth="3" strokeDasharray="5,5" />
                     <line x1="30%" y1="10%" x2="70%" y2="90%" stroke="#4B5563" strokeWidth="3" strokeDasharray="5,5" />
                   </svg>
                   
                   {/* Train Positions */}
-                  <div className="absolute top-1/3 left-1/4 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center animate-pulse">
+                  <div className="absolute top-1/3 left-1/4 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center animate-pulse pointer-events-none">
                     <Train className="h-2 w-2 text-white" />
                   </div>
-                  <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
+                  <div className="absolute top-1/2 left-1/2 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center pointer-events-none">
                     <Train className="h-2 w-2 text-white" />
                   </div>
-                  <div className="absolute top-2/3 left-3/4 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                  <div className="absolute top-2/3 left-3/4 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center pointer-events-none">
                     <Train className="h-2 w-2 text-white" />
                   </div>
                 </div>
               </div>
 
-              {/* Collision Warnings */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Active Warnings</h3>
-                {collisionWarnings.map((warning) => (
-                  <div key={warning.id} className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-red-800">Collision Risk</span>
-                      <Badge className={`${
-                        warning.severity === 'HIGH' ? 'bg-red-500' : 'bg-yellow-500'
-                      }`}>
-                        {warning.severity}
-                      </Badge>
+              {/* Key Metrics */}
+              <Card className="self-start">
+                <CardHeader className="pb-3">
+                  <CardTitle>Key Metrics</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-blue-200 bg-blue-50 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-blue-700">Trains Online</span>
+                        <Train className="h-4 w-4 text-blue-600" />
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-blue-900">{totalTrains}</div>
                     </div>
-                    <div className="space-y-1 text-sm text-red-700">
-                      <p><strong>Trains:</strong> {warning.trains.join(' & ')}</p>
-                      <p><strong>Distance:</strong> {warning.distance}</p>
-                      <p><strong>ETA:</strong> {warning.estimatedCollision}</p>
+
+                    <div className="rounded-xl border border-green-200 bg-green-50 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-green-700">On-Time %</span>
+                        <Clock className="h-4 w-4 text-green-600" />
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-green-900">{onTimePercent}%</div>
                     </div>
-                    <Button size="sm" className="mt-3 bg-red-600 hover:bg-red-700">
-                      Take Action
-                    </Button>
+
+                    <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-indigo-700">Stations Active</span>
+                        <MapPin className="h-4 w-4 text-indigo-600" />
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-indigo-900">{activeStations} / {totalStations}</div>
+                    </div>
+
+                    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-amber-700">Passenger Load</span>
+                        <Zap className="h-4 w-4 text-amber-600" />
+                      </div>
+                      <div className="mt-2 text-2xl font-semibold text-amber-900">{passengerLoad}%</div>
+                    </div>
                   </div>
-                ))}
-              </div>
+                </CardContent>
+              </Card>
             </div>
           </CardContent>
         </Card>

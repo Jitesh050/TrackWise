@@ -78,6 +78,10 @@ const CollisionDetectionMap = () => {
     }
   };
 
+  const handleMapClick = () => {
+    window.location.href = "https://trackwisesimulation.vercel.app/";
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
@@ -99,8 +103,22 @@ const CollisionDetectionMap = () => {
         </CardHeader>
         <CardContent>
           <div className="relative bg-gray-100 rounded-lg h-96 overflow-hidden">
+            {/* Click Overlay Anchor */}
+            <a
+              href="https://trackwisesimulation.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              onMouseDown={(e) => { e.stopPropagation(); }}
+              onClickCapture={(e) => { e.stopPropagation(); }}
+              onClick={(e) => { e.stopPropagation(); }}
+              className="absolute inset-0 z-[9999] block cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
+              aria-label="Open TrackWise Simulation"
+              title="Open TrackWise Simulation"
+            >
+              <span className="sr-only">Open TrackWise Simulation</span>
+            </a>
             {/* Simulated Map Background */}
-            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-50 to-green-50 pointer-events-none">
               {/* Railway Lines */}
               <svg className="absolute inset-0 w-full h-full">
                 <line x1="10%" y1="50%" x2="90%" y2="20%" stroke="#4B5563" strokeWidth="3" strokeDasharray="5,5" />
@@ -112,7 +130,7 @@ const CollisionDetectionMap = () => {
               {trains.map((train, index) => (
                 <div
                   key={train.id}
-                  className={`absolute w-6 h-6 rounded-full ${getStatusColor(train.status)} flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white`}
+                  className={`absolute w-6 h-6 rounded-full ${getStatusColor(train.status)} flex items-center justify-center transform -translate-x-1/2 -translate-y-1/2 shadow-lg border-2 border-white pointer-events-none`}
                   style={{
                     left: `${30 + index * 20}%`,
                     top: `${40 + index * 15}%`
@@ -123,7 +141,7 @@ const CollisionDetectionMap = () => {
               ))}
               
               {/* Collision Warning Zone */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-4 border-red-500 border-dashed rounded-full bg-red-100 bg-opacity-50 animate-pulse flex items-center justify-center">
+              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-24 border-4 border-red-500 border-dashed rounded-full bg-red-100 bg-opacity-50 animate-pulse flex items-center justify-center pointer-events-none">
                 <AlertTriangle className="h-6 w-6 text-red-600" />
               </div>
             </div>
@@ -181,14 +199,19 @@ const CollisionDetectionMap = () => {
                 <AlertDescription>
                   <div className="flex justify-between items-center">
                     <div>
-                      <p className="font-medium text-red-800">{warning.message}</p>
-                      <p className="text-sm text-red-700">
-                        Distance: {warning.distance}km | Time to collision: {warning.timeToCollision}s
+                      <p className="font-medium">{warning.message}</p>
+                      <p className="text-sm text-red-600 mt-1">
+                        Distance: {warning.distance}km • Time to impact: {warning.timeToCollision}s
                       </p>
                     </div>
-                    <Button size="sm" variant="destructive">
-                      Send Alert
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline" className="border-red-300 text-red-600 hover:bg-red-50">
+                        View Details
+                      </Button>
+                      <Button size="sm" variant="destructive">
+                        Acknowledge
+                      </Button>
+                    </div>
                   </div>
                 </AlertDescription>
               </Alert>
