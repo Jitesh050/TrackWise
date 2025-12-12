@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { API_BASE_URL } from '../config';
+import { MENU_ITEMS } from '../data/foodMenu';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,18 +46,11 @@ const FoodOrdering = () => {
   }, []);
 
   const fetchMenu = async () => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/food/menu`);
-      const data = await response.json();
-      if (data.success) {
-        setMenu(data.menu);
-      }
-    } catch (error) {
-      console.error('Failed to fetch menu:', error);
-      toast.error("Failed to load menu. Please make sure the backend server is running.");
-    } finally {
+    // Simulate network delay
+    setTimeout(() => {
+      setMenu(MENU_ITEMS);
       setLoading(false);
-    }
+    }, 500);
   };
 
   const addToCart = (item: MenuItem) => {
@@ -97,26 +90,34 @@ const FoodOrdering = () => {
       return;
     }
 
-    try {
-      const response = await fetch(`${API_BASE_URL}/api/food/order`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ticketNumber, items: cart })
-      });
-      const data = await response.json();
+    // Simulate backend order processing
+    setLoading(true); // Re-using loading state or we could add a specific submitting state
+    
+    setTimeout(() => {
+      // Calculate total amount
+      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
       
-      if (data.success) {
-        setOrderPlaced(data.order);
-        setCart([]);
-        setActiveTab("status");
-        toast.success("Order placed successfully!");
-      } else {
-        toast.error(data.error || "Failed to place order");
-      }
-    } catch (error) {
-      console.error('Order error:', error);
-      toast.error("Failed to place order. Please try again.");
-    }
+      // Calculate estimated delivery time (15-30 mins mock)
+      const baseTime = 15;
+      const randomVariance = Math.floor(Math.random() * 15);
+      const estimatedTime = `${baseTime + randomVariance} mins`;
+
+      const newOrder: Order = {
+        id: Date.now().toString(),
+        ticketNumber,
+        items: [...cart],
+        totalAmount: total,
+        status: 'Preparing',
+        estimatedTime,
+        createdAt: new Date().toISOString()
+      };
+
+      setOrderPlaced(newOrder);
+      setCart([]);
+      setActiveTab("status");
+      toast.success("Order placed successfully!");
+      setLoading(false);
+    }, 1500);
   };
 
   const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
