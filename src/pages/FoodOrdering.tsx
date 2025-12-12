@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,7 +47,7 @@ const FoodOrdering = () => {
 
   const fetchMenu = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/food/menu');
+      const response = await fetch(`${API_BASE_URL}/api/food/menu`);
       const data = await response.json();
       if (data.success) {
         setMenu(data.menu);
@@ -97,7 +98,7 @@ const FoodOrdering = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/food/order', {
+      const response = await fetch(`${API_BASE_URL}/api/food/order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticketNumber, items: cart })
