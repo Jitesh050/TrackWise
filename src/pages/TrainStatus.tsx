@@ -9,9 +9,11 @@ import { Search, Filter, ArrowRight } from "lucide-react";
 import TrainStatusCard from "@/components/TrainStatusCard";
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 
+import { useMemo } from "react";
+
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
   const [params] = useSearchParams();
@@ -19,19 +21,29 @@ const TrainStatus = () => {
   // Prefill query from URL (?q=...) so redirects from the homepage are filtered immediately
   useEffect(() => {
     const q = params.get("q") || "";
-    if (q) setSearchQuery(q);
+    if (q) {
+      setSearchQuery(q);
+      setDebouncedQuery(q);
+    }
   }, [params]);
 
-  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-    const s = (status || "").toLowerCase();
-    if (s.includes("cancel")) return "cancelled";
-    if (s.includes("board")) return "boarding";
-    if (s.includes("delay")) return "delayed";
-    return "ontime";
-  };
-  
-  // Filter trains from hook based on search and active tab
+  // Debounce search query
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedQuery(searchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  const filteredTrains = useMemo(() => {
+    const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+      const s = (status || "").toLowerCase();
+      if (s.includes("cancel")) return "cancelled";
+      if (s.includes("board")) return "boarding";
+      if (s.includes("delay")) return "delayed";
+      return "ontime";
+    };
+
     const list = (trains || []).map((t: any) => ({
       id: String(t.id),
       trainNumber: String(t.id),
@@ -47,7 +59,7 @@ const TrainStatus = () => {
       nextStation: t.nextStation,
     }));
 
-    const query = searchQuery.toLowerCase();
+    const query = debouncedQuery.toLowerCase();
     let results = list.filter((train) =>
       !query ||
       train.trainNumber.toLowerCase().includes(query) ||
@@ -59,9 +71,8 @@ const TrainStatus = () => {
     if (activeTab !== "all") {
       results = results.filter((train) => train.status === activeTab);
     }
-
-    setFilteredTrains(results);
-  }, [searchQuery, activeTab, trains]);
+    return results;
+  }, [trains, debouncedQuery, activeTab]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

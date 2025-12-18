@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { memo } from "react";
 
 interface TrainStatusCardProps {
   trainNumber: string;
@@ -125,4 +126,4 @@ const TrainStatusCard = ({
   );
 };
 
-export default TrainStatusCard;
+export default memo(TrainStatusCard);

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,8 @@ import TrainStatusCard from "@/components/TrainStatusCard";
 
 const LiveTrainStatus = () => {
   const [searchTrain, setSearchTrain] = useState("");
+  // Debounced search term to avoid filtering on every keystroke
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [isSearching, setIsSearching] = useState(false);
   const { trains, loading, updateTrainStatus } = useTrainStatus();
   const [filter, setFilter] = useState<"all" | "ontime" | "delayed" | "boarding" | "cancelled">("all");
@@ -19,28 +21,42 @@ const LiveTrainStatus = () => {
   // Prefill from URL query (?q=...) so navigation from the homepage filters immediately
   useEffect(() => {
     const q = params.get("q") || "";
-    if (q) setSearchTrain(q);
+    if (q) {
+      setSearchTrain(q);
+      setDebouncedSearch(q);
+    }
   }, [params]);
 
-  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-    const s = (status || "").toLowerCase();
-    if (s.includes("cancel")) return "cancelled";
-    if (s.includes("board")) return "boarding";
-    if (s.includes("delay")) return "delayed";
-    return "ontime";
-  };
+  // Debounce search input
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTrain);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTrain]);
 
-  const query = searchTrain.trim().toLowerCase();
-  const filteredTrains = (trains || []).filter((t: any) => {
-    const matchesQuery = !query ||
-      String(t.id).toLowerCase().includes(query) ||
-      String(t.name || "").toLowerCase().includes(query) ||
-      String(t.from || "").toLowerCase().includes(query) ||
-      String(t.to || "").toLowerCase().includes(query);
-    const cardStatus = mapStatusToCard(t.status);
-    const matchesFilter = filter === "all" || cardStatus === filter;
-    return matchesQuery && matchesFilter;
-  });
+  const filteredTrains = useMemo(() => {
+    const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+      const s = (status || "").toLowerCase();
+      if (s.includes("cancel")) return "cancelled";
+      if (s.includes("board")) return "boarding";
+      if (s.includes("delay")) return "delayed";
+      return "ontime";
+    };
+
+    const query = debouncedSearch.trim().toLowerCase();
+
+    return (trains || []).filter((t: any) => {
+      const matchesQuery = !query ||
+        String(t.id).toLowerCase().includes(query) ||
+        String(t.name || "").toLowerCase().includes(query) ||
+        String(t.from || "").toLowerCase().includes(query) ||
+        String(t.to || "").toLowerCase().includes(query);
+      const cardStatus = mapStatusToCard(t.status);
+      const matchesFilter = filter === "all" || cardStatus === filter;
+      return matchesQuery && matchesFilter;
+    });
+  }, [trains, debouncedSearch, filter]);
 
   const handleSearch = async () => {
     // keep a tiny debounce to avoid spamming state
