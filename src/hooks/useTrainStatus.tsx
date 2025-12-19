@@ -61,6 +61,15 @@ export interface UseTrainStatusReturn {
 const TRAINS_DATA: TrainRecord[] = (trainsData as any) as TrainRecord[]
 const SCHEDULES_DATA: ScheduleRecord[] = (schedulesData as any) as ScheduleRecord[]
 
+// Pre-group schedules by train_no to avoid O(N*M) lookup
+const SCHEDULES_BY_TRAIN = new Map<string, ScheduleRecord[]>()
+SCHEDULES_DATA.forEach((s) => {
+  if (!SCHEDULES_BY_TRAIN.has(s.train_no)) {
+    SCHEDULES_BY_TRAIN.set(s.train_no, [])
+  }
+  SCHEDULES_BY_TRAIN.get(s.train_no)?.push(s)
+})
+
 // Build station name map from simulation helper
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
@@ -81,16 +90,17 @@ const getSimBaseNow = (): Date => {
 const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
   const data: TrainStatusItem[] = []
   const currentTime = now.getTime()
+  const dateString = now.toDateString()
 
   TRAINS_DATA.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
+    const trainSchedules = SCHEDULES_BY_TRAIN.get(trainNo) || []
     if (trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
     const destStation = trainSchedules[trainSchedules.length - 1]
 
-    const departureTime = new Date(now.toDateString() + ' ' + sourceStation.departure).getTime()
+    const departureTime = new Date(dateString + ' ' + sourceStation.departure).getTime()
 
     let status: TrainStatusItem['status'] = 'On Time'
     let delay = 0
@@ -103,7 +113,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     for (let i = 0; i < trainSchedules.length; i++) {
       const stop = trainSchedules[i]
       if (stop.departure) {
-        const stopTime = new Date(now.toDateString() + ' ' + stop.departure).getTime()
+        const stopTime = new Date(dateString + ' ' + stop.departure).getTime()
         if (stopTime <= currentTime) {
           currentLegIndex = i
         } else {
@@ -123,7 +133,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
       nextStation = getStationName(nextStop.station_id)
       // Deterministic: mark Delayed only if current time has passed expected arrival at nextStop
       const nextArrStr = nextStop.arrival || nextStop.departure || '00:00'
-      const nextArr = new Date(now.toDateString() + ' ' + nextArrStr).getTime()
+      const nextArr = new Date(dateString + ' ' + nextArrStr).getTime()
       if (currentTime > nextArr) {
         status = 'Delayed'
         delay = Math.floor((currentTime - nextArr) / 60000)
@@ -149,8 +159,8 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
 
       const legStartStr = currentStop.departure || currentStop.arrival || '00:00'
       const legEndStr = nextStop.arrival || nextStop.departure || legStartStr
-      const legStart = new Date(now.toDateString() + ' ' + legStartStr).getTime()
-      const legEnd = new Date(now.toDateString() + ' ' + legEndStr).getTime()
+      const legStart = new Date(dateString + ' ' + legStartStr).getTime()
+      const legEnd = new Date(dateString + ' ' + legEndStr).getTime()
       let legFrac = 0
       if (legEnd > legStart) {
         legFrac = (currentTime - legStart) / (legEnd - legStart)
