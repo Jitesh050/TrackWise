@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,16 @@ import { Search, Filter, ArrowRight } from "lucide-react";
 import TrainStatusCard from "@/components/TrainStatusCard";
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 
+const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+  const s = (status || "").toLowerCase();
+  if (s.includes("cancel")) return "cancelled";
+  if (s.includes("board")) return "boarding";
+  if (s.includes("delay")) return "delayed";
+  return "ontime";
+};
+
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
   const [params] = useSearchParams();
@@ -22,17 +29,9 @@ const TrainStatus = () => {
     if (q) setSearchQuery(q);
   }, [params]);
 
-  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-    const s = (status || "").toLowerCase();
-    if (s.includes("cancel")) return "cancelled";
-    if (s.includes("board")) return "boarding";
-    if (s.includes("delay")) return "delayed";
-    return "ontime";
-  };
-  
-  // Filter trains from hook based on search and active tab
-  useEffect(() => {
-    const list = (trains || []).map((t: any) => ({
+  // Performance Optimization: Use useMemo for mapping and filtering to avoid extra renders and calculations
+  const mappedTrains = useMemo(() => {
+    return (trains || []).map((t: any) => ({
       id: String(t.id),
       trainNumber: String(t.id),
       trainName: String(t.name || ""),
@@ -46,9 +45,11 @@ const TrainStatus = () => {
       progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
       nextStation: t.nextStation,
     }));
+  }, [trains]);
 
+  const filteredTrains = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    let results = list.filter((train) =>
+    let results = mappedTrains.filter((train) =>
       !query ||
       train.trainNumber.toLowerCase().includes(query) ||
       train.trainName.toLowerCase().includes(query) ||
@@ -60,8 +61,8 @@ const TrainStatus = () => {
       results = results.filter((train) => train.status === activeTab);
     }
 
-    setFilteredTrains(results);
-  }, [searchQuery, activeTab, trains]);
+    return results;
+  }, [mappedTrains, searchQuery, activeTab]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
