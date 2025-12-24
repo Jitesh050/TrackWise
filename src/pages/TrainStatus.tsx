@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,9 @@ const TrainStatus = () => {
     return "ontime";
   };
   
-  // Filter trains from hook based on search and active tab
-  useEffect(() => {
-    const list = (trains || []).map((t: any) => ({
+  // Memoize mapped trains to avoid re-mapping on every search input change
+  const mappedTrains = useMemo(() => {
+    return (trains || []).map((t: any) => ({
       id: String(t.id),
       trainNumber: String(t.id),
       trainName: String(t.name || ""),
@@ -46,9 +46,12 @@ const TrainStatus = () => {
       progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
       nextStation: t.nextStation,
     }));
+  }, [trains]);
 
+  // Filter trains from hook based on search and active tab
+  useEffect(() => {
     const query = searchQuery.toLowerCase();
-    let results = list.filter((train) =>
+    let results = mappedTrains.filter((train) =>
       !query ||
       train.trainNumber.toLowerCase().includes(query) ||
       train.trainName.toLowerCase().includes(query) ||
@@ -61,7 +64,7 @@ const TrainStatus = () => {
     }
 
     setFilteredTrains(results);
-  }, [searchQuery, activeTab, trains]);
+  }, [searchQuery, activeTab, mappedTrains]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
