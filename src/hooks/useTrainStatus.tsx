@@ -61,6 +61,16 @@ export interface UseTrainStatusReturn {
 const TRAINS_DATA: TrainRecord[] = (trainsData as any) as TrainRecord[]
 const SCHEDULES_DATA: ScheduleRecord[] = (schedulesData as any) as ScheduleRecord[]
 
+// Pre-group schedules by train number for O(1) access
+// Optimized: Replaced repeated array filtering (O(N*M)) with Hash Map lookup (O(N))
+const SCHEDULES_BY_TRAIN: Map<string, ScheduleRecord[]> = new Map()
+SCHEDULES_DATA.forEach((s) => {
+  if (!SCHEDULES_BY_TRAIN.has(s.train_no)) {
+    SCHEDULES_BY_TRAIN.set(s.train_no, [])
+  }
+  SCHEDULES_BY_TRAIN.get(s.train_no)?.push(s)
+})
+
 // Build station name map from simulation helper
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
@@ -84,7 +94,8 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
 
   TRAINS_DATA.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
+    // Optimized: Use Map lookup instead of .filter()
+    const trainSchedules = SCHEDULES_BY_TRAIN.get(trainNo) || []
     if (trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
