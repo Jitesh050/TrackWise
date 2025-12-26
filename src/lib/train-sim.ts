@@ -101,9 +101,13 @@ const STATIONS_NAME_MAP: Record<string, string> = {
   CDG: 'Chandigarh'
 };
 
+// Cache for station names to prevent re-mapping on every render
+let _allStationsWithNamesCache: { code: string; name: string }[] | null = null;
 export function getAllStationsWithNames(): { code: string; name: string }[] {
+  if (_allStationsWithNamesCache) return _allStationsWithNamesCache;
   const codes = getAllStations();
-  return codes.map((c) => ({ code: c, name: STATIONS_NAME_MAP[c] || c }));
+  _allStationsWithNamesCache = codes.map((c) => ({ code: c, name: STATIONS_NAME_MAP[c] || c }));
+  return _allStationsWithNamesCache;
 }
 
 function timeToMinutes(t: string): number {
