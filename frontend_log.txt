@@ -1,0 +1,8 @@
+
+> vite_react_shadcn_ts@0.0.0 dev
+> concurrently "npm.cmd run dev:frontend" "npm.cmd run dev:backend" --host
+
+[0] /bin/sh: 1: npm.cmd: not found
+[1] /bin/sh: 1: npm.cmd: not found
+[1] npm.cmd run dev:backend exited with code 127
+[0] npm.cmd run dev:frontend exited with code 127
