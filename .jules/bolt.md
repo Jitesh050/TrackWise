@@ -1,0 +1,3 @@
+## 2024-05-23 - Render Performance in Data-Heavy Components
+**Learning:** React components processing large static datasets (like `schedules_100.json`) inside the render body or un-optimized `useMemo` can cause significant blocking time, even if the result seems simple (like a single number).
+**Action:** Move static data processing (grouping/indexing) out of the component scope entirely. For dynamic data derived from static data, use O(1) lookups (Maps) instead of repeated array filtering (O(N*M)). Always verify "simple" calculations that iterate over large arrays.
