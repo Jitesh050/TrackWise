@@ -1,0 +1,3 @@
+## 2024-01-04 - [Simulation Data Access Bottleneck]
+**Learning:** React hooks processing large datasets in every render/update cycle (even with useMemo) can cause significant thread blocking if the underlying data access is O(N*M). In this case, `useTrainStatus` was filtering a 392-item schedule list for every one of the 100 trains on every clock tick, resulting in ~40k operations per second.
+**Action:** Always pre-index static relationships (like Train -> Schedules) into Maps or HashTables at the module level (outside the component). This reduces lookup complexity to O(1) and ensures referential stability.
