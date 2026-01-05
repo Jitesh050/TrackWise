@@ -5,7 +5,14 @@ const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
+  private static cache = new Map<string, TouristSpot[]>();
+
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
+    const key = `${lat},${lon},${radius}`;
+    if (this.cache.has(key)) {
+      return this.cache.get(key)!;
+    }
+
     try {
       console.log(`Searching for attractions near lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
       
@@ -49,6 +56,7 @@ export class TouristSpotService {
         };
       }).filter(Boolean); // Remove null entries
       
+      this.cache.set(key, attractions);
       return attractions;
     } catch (error) {
       console.error('Error fetching tourist attractions:', error);
@@ -143,7 +151,14 @@ export class TouristSpotService {
 
 // Geoapify API service for hotels
 export class HotelService {
+  private static cache = new Map<string, Hotel[]>();
+
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
+    const key = `${lat},${lon},${radius}`;
+    if (this.cache.has(key)) {
+      return this.cache.get(key)!;
+    }
+
     try {
       const response = await fetch(
         `https://api.geoapify.com/v2/places?categories=accommodation.hotel&filter=circle:${lon},${lat},${radius}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
@@ -176,6 +191,7 @@ export class HotelService {
         };
       });
       
+      this.cache.set(key, hotels);
       return hotels;
     } catch (error) {
       console.error('Error fetching hotels:', error);
