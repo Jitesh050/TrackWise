@@ -58,13 +58,26 @@ export interface UseTrainStatusReturn {
 }
 
 // --- Load simulation data ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TRAINS_DATA: TrainRecord[] = (trainsData as any) as TrainRecord[]
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SCHEDULES_DATA: ScheduleRecord[] = (schedulesData as any) as ScheduleRecord[]
+
+// Pre-process schedules into a Map for O(1) lookup
+// This optimizes generateLiveStatus from O(N*M) to O(N)
+const SCHEDULES_MAP = new Map<string, ScheduleRecord[]>()
+SCHEDULES_DATA.forEach((s) => {
+  if (!SCHEDULES_MAP.has(s.train_no)) {
+    SCHEDULES_MAP.set(s.train_no, [])
+  }
+  SCHEDULES_MAP.get(s.train_no)!.push(s)
+})
 
 // Build station name map from simulation helper
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
   const map: Record<string, string> = {}
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   entries.forEach((s: any) => { map[s.code] = s.name })
   return map
 })()
@@ -84,8 +97,9 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
 
   TRAINS_DATA.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
-    if (trainSchedules.length < 2) return
+    // Optimized lookup using Map instead of .filter()
+    const trainSchedules = SCHEDULES_MAP.get(trainNo)
+    if (!trainSchedules || trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
     const destStation = trainSchedules[trainSchedules.length - 1]
@@ -96,7 +110,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     let delay = 0
     let nextStation = ''
     let currentDeparture = sourceStation.departure
-    let currentArrival = destStation.arrival
+    const currentArrival = destStation.arrival
     const platform = (parseInt(trainNo.slice(-1)) % 10) + 1
 
     let currentLegIndex = -1
@@ -115,7 +129,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     if (currentLegIndex === -1) {
       // Before first departure
       status = 'Boarding'
-      const timeUntilDeparture = departureTime - currentTime
+      // removed unused timeUntilDeparture
       // No randomness; treat pre-departure as Boarding
       nextStation = getStationName(trainSchedules[1].station_id)
     } else if (currentLegIndex < trainSchedules.length - 1) {
@@ -186,6 +200,7 @@ const initialTrainData: TrainStatusItem[] = generateLiveStatus(getSimBaseNow())
 export const useTrainStatus = (): UseTrainStatusReturn => {
   const [trains, setTrains] = useState<TrainStatusItem[]>(initialTrainData)
   const [loading, setLoading] = useState<boolean>(false)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [error, setError] = useState<unknown>(null)
   const offsetMinRef = useRef<number>(0) // accelerated minutes offset from base
 
