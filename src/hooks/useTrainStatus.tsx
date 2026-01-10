@@ -61,6 +61,14 @@ export interface UseTrainStatusReturn {
 const TRAINS_DATA: TrainRecord[] = (trainsData as any) as TrainRecord[]
 const SCHEDULES_DATA: ScheduleRecord[] = (schedulesData as any) as ScheduleRecord[]
 
+// O(1) Lookup: Group schedules by train number
+const SCHEDULES_BY_TRAIN_ID = new Map<string, ScheduleRecord[]>()
+SCHEDULES_DATA.forEach((s) => {
+  const list = SCHEDULES_BY_TRAIN_ID.get(s.train_no) || []
+  list.push(s)
+  SCHEDULES_BY_TRAIN_ID.set(s.train_no, list)
+})
+
 // Build station name map from simulation helper
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
@@ -84,7 +92,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
 
   TRAINS_DATA.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
+    const trainSchedules = SCHEDULES_BY_TRAIN_ID.get(trainNo) || []
     if (trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
@@ -96,7 +104,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     let delay = 0
     let nextStation = ''
     let currentDeparture = sourceStation.departure
-    let currentArrival = destStation.arrival
+    const currentArrival = destStation.arrival
     const platform = (parseInt(trainNo.slice(-1)) % 10) + 1
 
     let currentLegIndex = -1
