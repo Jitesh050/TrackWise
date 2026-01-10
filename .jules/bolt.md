@@ -1,0 +1,3 @@
+## 2024-05-23 - [O(N*M) to O(N) Optimization in Hooks]
+**Learning:** React hooks that process large static datasets (like simulation JSONs) inside the component body or helper functions can accidentally create O(N*M) complexity if they use nested loops or repeated filters (e.g., `filter` inside `forEach`). Even if the component itself doesn't re-render often, the calculation blocks the main thread during execution.
+**Action:** Move data processing (like grouping or indexing) to the module scope using `Map` or `Record` so it runs only once at load time. This transforms runtime lookups from O(N) to O(1).
