@@ -1,0 +1,3 @@
+## 2024-03-24 - [API Caching Implementation]
+**Learning:** Implemented static in-memory caching for `TouristSpotService` and `HotelService`. While external API calls are necessary for fresh data, static data associated with fixed locations (like stations) rarely changes and is a prime candidate for caching. The use of `JSON.parse(JSON.stringify())` is critical to prevent consumers from mutating the shared cache state, which is a common source of bugs in simple cache implementations.
+**Action:** Always consider the volatility of data when implementing caching. For data tied to physical infrastructure (like "hotels near station X"), changes are infrequent enough that session-based caching is highly effective and safe. Always protect the cache from mutation.
