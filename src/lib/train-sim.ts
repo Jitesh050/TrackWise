@@ -106,6 +106,14 @@ export function getAllStationsWithNames(): { code: string; name: string }[] {
   return codes.map((c) => ({ code: c, name: STATIONS_NAME_MAP[c] || c }));
 }
 
+export function getAllTrains(): SimTrain[] {
+  return trains as SimTrain[];
+}
+
+export function getTrainSchedule(trainNo: string): SimStop[] {
+  return stopsByTrain.get(trainNo) || [];
+}
+
 function timeToMinutes(t: string): number {
   if (!t) return 0;
   const [h, m] = t.split(":").map((x) => parseInt(x, 10));
