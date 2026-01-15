@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MapPin, Train, Clock, Zap, AlertTriangle } from "lucide-react";
 import { useTrainStatus } from "@/hooks/useTrainStatus";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import schedules from "../../simulation/schedules_100.json";
+import { getTrainSchedule } from "@/lib/train-sim";
 
 const CollisionDetection = () => {
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
@@ -48,17 +46,14 @@ const CollisionDetection = () => {
     const ontime = list.filter((t: any) => String(t.status).toLowerCase().includes("on time")).length;
     return Math.round((ontime / list.length) * 1000) / 10;
   })();
-  const averageSpeed = (() => {
+  const averageSpeed = useMemo(() => {
     try {
-      const byTrain: Record<string, any[]> = {};
-      (schedules as any[]).forEach((s) => {
-        (byTrain[s.train_no] ||= []).push(s);
-      });
       const speeds: number[] = [];
       (trains || []).forEach((t: any) => {
-        const arr = byTrain[String(t.id)] || [];
-        if (arr.length < 2) return;
-        arr.sort((a,b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
+        const arr = getTrainSchedule(String(t.id));
+        if (!arr || arr.length < 2) return;
+
+        // arr is already sorted by getTrainSchedule/stopsByTrain logic
         const first = arr[0];
         const last = arr[arr.length - 1];
         const km = Math.max(0, (last.cum_distance_km || 0) - (first.cum_distance_km || 0));
@@ -74,7 +69,7 @@ const CollisionDetection = () => {
     } catch {
       return 0;
     }
-  })();
+  }, [trains]);
   const highRiskRoutes = groups.filter(g => g.riskLevel === 'high').length;
 
   return (
