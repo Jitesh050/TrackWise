@@ -5,7 +5,14 @@ const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
+  private static cache = new Map<string, TouristSpot[]>();
+
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
+    const cacheKey = `${lat},${lon},${radius}`;
+    if (this.cache.has(cacheKey)) {
+      return JSON.parse(JSON.stringify(this.cache.get(cacheKey)));
+    }
+
     try {
       console.log(`Searching for attractions near lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
       
@@ -22,6 +29,8 @@ export class TouristSpotService {
       console.log(`Found ${data.features?.length || 0} attractions`);
       
       if (!data.features || data.features.length === 0) {
+        // Cache empty results too, to avoid re-fetching
+        this.cache.set(cacheKey, []);
         return [];
       }
       
@@ -49,7 +58,8 @@ export class TouristSpotService {
         };
       }).filter(Boolean); // Remove null entries
       
-      return attractions;
+      this.cache.set(cacheKey, attractions);
+      return JSON.parse(JSON.stringify(attractions));
     } catch (error) {
       console.error('Error fetching tourist attractions:', error);
       return [];
@@ -143,7 +153,14 @@ export class TouristSpotService {
 
 // Geoapify API service for hotels
 export class HotelService {
+  private static cache = new Map<string, Hotel[]>();
+
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
+    const cacheKey = `${lat},${lon},${radius}`;
+    if (this.cache.has(cacheKey)) {
+      return JSON.parse(JSON.stringify(this.cache.get(cacheKey)));
+    }
+
     try {
       const response = await fetch(
         `https://api.geoapify.com/v2/places?categories=accommodation.hotel&filter=circle:${lon},${lat},${radius}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
@@ -156,6 +173,7 @@ export class HotelService {
       const data = await response.json();
       
       if (!data.features || data.features.length === 0) {
+        this.cache.set(cacheKey, []);
         return [];
       }
       
@@ -176,7 +194,8 @@ export class HotelService {
         };
       });
       
-      return hotels;
+      this.cache.set(cacheKey, hotels);
+      return JSON.parse(JSON.stringify(hotels));
     } catch (error) {
       console.error('Error fetching hotels:', error);
       return [];
