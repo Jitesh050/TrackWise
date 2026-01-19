@@ -1,0 +1,3 @@
+## 2024-05-23 - Rediscovered Missing Caching in API Services
+**Learning:** The `TouristSpotService` and `HotelService` were expected to have in-memory caching (per memory) but the code revealed raw `fetch` calls. This discrepancy suggests that either the memory was outdated or the feature was lost. Implementing static `Map` caching for these read-only, coordinate-based lookups is a high-value, low-risk optimization that saves expensive API calls on station re-selection.
+**Action:** Always verify "known" optimizations against the actual code. When dealing with expensive external APIs (like Geoapify), always look for or implement simple in-memory caching for static parameters.
