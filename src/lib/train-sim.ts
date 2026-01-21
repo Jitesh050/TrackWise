@@ -181,3 +181,17 @@ export function findTrains(originInput: string, destinationInput: string, date: 
   results.sort((a, b) => timeToMinutes(a.departureTime) - timeToMinutes(b.departureTime));
   return results.slice(0, 20);
 }
+
+/**
+ * Returns all available train records.
+ */
+export function getAllTrains(): SimTrain[] {
+  return trains as SimTrain[];
+}
+
+/**
+ * Returns the schedule for a specific train number, O(1).
+ */
+export function getTrainSchedule(trainNo: string): SimStop[] | undefined {
+  return stopsByTrain.get(trainNo);
+}
