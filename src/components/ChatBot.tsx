@@ -281,7 +281,7 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
   setTimeout(() => {
     let botResponse = "";
     let nextFlow: ChatBotFlow = flow;
-    let updateDiscover = { ...discover };
+    const updateDiscover = { ...discover };
 
     switch (flow) {
       case 'select_option':
