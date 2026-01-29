@@ -1,13 +1,10 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MapPin, Train, Clock, Zap, AlertTriangle } from "lucide-react";
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 import { getTrainSchedule } from "@/lib/train-sim";
 
 const CollisionDetection = () => {
-  const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const { trains } = useTrainStatus();
 
   const groups = useMemo(() => {
