@@ -13,20 +13,6 @@ export interface TrainRecord {
   category: string
 }
 
-export interface ScheduleRecord {
-  train_no: string
-  station_id: string
-  arrival: string // "" when not applicable
-  departure: string // "" when not applicable
-  halt_min: number
-  seq: number
-}
-
-export interface StationRecord {
-  id: string
-  name: string
-}
-
 export interface TrainStatusItem {
   id: string
   name: string
@@ -111,7 +97,6 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     if (currentLegIndex === -1) {
       // Before first departure
       status = 'Boarding'
-      const timeUntilDeparture = departureTime - currentTime
       // No randomness; treat pre-departure as Boarding
       nextStation = getStationName(trainSchedules[1].station_id)
     } else if (currentLegIndex < trainSchedules.length - 1) {
