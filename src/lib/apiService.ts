@@ -5,14 +5,15 @@ const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
-  private static cache = new Map<string, any>();
+  private static cache = new Map<string, TouristSpot[]>();
   private static MAX_CACHE_SIZE = 50;
 
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
     const cacheKey = `${lat},${lon},${radius}`;
 
     if (this.cache.has(cacheKey)) {
-      return JSON.parse(JSON.stringify(this.cache.get(cacheKey)));
+      // Use type assertion to handle the potential undefined from get() (checked by has())
+      return JSON.parse(JSON.stringify(this.cache.get(cacheKey))) as TouristSpot[];
     }
 
     try {
@@ -157,14 +158,15 @@ export class TouristSpotService {
 
 // Geoapify API service for hotels
 export class HotelService {
-  private static cache = new Map<string, any>();
+  private static cache = new Map<string, Hotel[]>();
   private static MAX_CACHE_SIZE = 50;
 
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
     const cacheKey = `${lat},${lon},${radius}`;
 
     if (this.cache.has(cacheKey)) {
-      return JSON.parse(JSON.stringify(this.cache.get(cacheKey)));
+      // Use type assertion to handle the potential undefined from get() (checked by has())
+      return JSON.parse(JSON.stringify(this.cache.get(cacheKey))) as Hotel[];
     }
 
     try {
