@@ -31,6 +31,11 @@ export default tseslint.config(
       "@typescript-eslint/no-empty-object-type": "off",
       "no-useless-escape": "off",
       "@typescript-eslint/no-require-imports": "off",
+      "react-refresh/only-export-components": "off",
+      "react-hooks/exhaustive-deps": "off",
+    },
+    linterOptions: {
+      reportUnusedDisableDirectives: false,
     },
   }
 );
