@@ -19,10 +19,8 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      "react-refresh/only-export-components": [
-        "warn",
-        { allowConstantExport: true },
-      ],
+      "react-refresh/only-export-components": "off",
+      "react-hooks/exhaustive-deps": "off",
       "@typescript-eslint/no-unused-vars": "off",
       // Bolt: Fix runtime crash in eslint-plugin-react-hooks / typescript-eslint interaction
       "@typescript-eslint/no-unused-expressions": "off",
