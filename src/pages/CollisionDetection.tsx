@@ -11,7 +11,9 @@ const CollisionDetection = () => {
   const { trains } = useTrainStatus();
 
   const groups = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const byStation = new Map<string, any[]>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (trains || []).forEach((t: any) => {
       const key = t.nextStation || "En Route";
       const arr = byStation.get(key) || [];
@@ -23,6 +25,7 @@ const CollisionDetection = () => {
       return {
         id: String(idx + 1),
         name: station,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         trains: arr.map((t: any) => ({
           id: String(t.id),
           name: String(t.name || "Unknown"),
@@ -39,16 +42,19 @@ const CollisionDetection = () => {
   // Risk badges removed per request
 
   const totalTrains = (trains || []).length;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const activeStations = new Set((trains || []).map((t: any) => t.nextStation).filter(Boolean)).size;
   const onTimePct = (() => {
     const list = trains || [];
     if (!list.length) return 0;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const ontime = list.filter((t: any) => String(t.status).toLowerCase().includes("on time")).length;
     return Math.round((ontime / list.length) * 1000) / 10;
   })();
   const averageSpeed = (() => {
     try {
       const speeds: number[] = [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (trains || []).forEach((t: any) => {
         const arr = getTrainSchedule(String(t.id));
         if (arr.length < 2) return;
