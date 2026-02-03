@@ -5,7 +5,14 @@ const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
+  private static cache = new Map<string, TouristSpot[]>();
+
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
+    const cacheKey = `${lat.toFixed(3)}-${lon.toFixed(3)}-${radius}`;
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey)!;
+    }
+
     try {
       console.log(`Searching for attractions near lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
       
@@ -22,6 +29,8 @@ export class TouristSpotService {
       console.log(`Found ${data.features?.length || 0} attractions`);
       
       if (!data.features || data.features.length === 0) {
+        if (this.cache.size > 100) this.cache.clear();
+        this.cache.set(cacheKey, []);
         return [];
       }
       
@@ -49,6 +58,8 @@ export class TouristSpotService {
         };
       }).filter(Boolean); // Remove null entries
       
+      if (this.cache.size > 100) this.cache.clear();
+      this.cache.set(cacheKey, attractions);
       return attractions;
     } catch (error) {
       console.error('Error fetching tourist attractions:', error);
@@ -143,7 +154,14 @@ export class TouristSpotService {
 
 // Geoapify API service for hotels
 export class HotelService {
+  private static cache = new Map<string, Hotel[]>();
+
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
+    const cacheKey = `${lat.toFixed(3)}-${lon.toFixed(3)}-${radius}`;
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey)!;
+    }
+
     try {
       const response = await fetch(
         `https://api.geoapify.com/v2/places?categories=accommodation.hotel&filter=circle:${lon},${lat},${radius}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
@@ -156,6 +174,8 @@ export class HotelService {
       const data = await response.json();
       
       if (!data.features || data.features.length === 0) {
+        if (this.cache.size > 100) this.cache.clear();
+        this.cache.set(cacheKey, []);
         return [];
       }
       
@@ -176,6 +196,8 @@ export class HotelService {
         };
       });
       
+      if (this.cache.size > 100) this.cache.clear();
+      this.cache.set(cacheKey, hotels);
       return hotels;
     } catch (error) {
       console.error('Error fetching hotels:', error);
