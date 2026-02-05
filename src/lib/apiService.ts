@@ -3,6 +3,23 @@ import { Station, TouristSpot, Hotel } from './stationData';
 const OPENTRIPMAP_API_KEY = '5ae2e3f221c38a28845f05b6b3fa1b0ebc61af498e582315f53ae35d';
 const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
+interface GeoapifyFeature {
+  type: string;
+  properties: {
+    name?: string;
+    categories?: string[];
+    formatted?: string;
+    phone?: string;
+    website?: string;
+    image_url?: string;
+    [key: string]: any;
+  };
+  geometry: {
+    type: string;
+    coordinates: number[];
+  };
+}
+
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
   private static cache = new Map<string, TouristSpot[]>();
@@ -34,7 +51,7 @@ export class TouristSpotService {
         return [];
       }
       
-      const attractions: TouristSpot[] = data.features.map((feature: any) => {
+      const attractions: TouristSpot[] = data.features.map((feature: GeoapifyFeature) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
         
@@ -174,12 +191,10 @@ export class HotelService {
       const data = await response.json();
       
       if (!data.features || data.features.length === 0) {
-        if (this.cache.size > 100) this.cache.clear();
-        this.cache.set(key, []);
         return [];
       }
       
-      const hotels: Hotel[] = data.features.map((feature: any) => {
+      const hotels: Hotel[] = data.features.map((feature: GeoapifyFeature) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
         
