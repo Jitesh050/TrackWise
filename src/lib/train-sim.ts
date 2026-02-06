@@ -47,13 +47,32 @@ export type SimSearchResult = {
   to: string;
 };
 
-// Build stops per train number
+// Build stops per train number, station index, and train lookup map
 const stopsByTrain: Map<string, SimStop[]> = new Map();
+const trainsByStation: Map<string, Set<string>> = new Map();
+const trainDetailsMap: Map<string, SimTrain> = new Map();
+
+// Index train details for O(1) lookup
+(trains as SimTrain[]).forEach(t => {
+  trainDetailsMap.set(t.train_no, t);
+});
+
 (schedules as SimStop[]).forEach((row) => {
+  // Build stopsByTrain
   const arr = stopsByTrain.get(row.train_no) || [];
   arr.push(row);
   stopsByTrain.set(row.train_no, arr);
+
+  // Build trainsByStation (Index for optimization)
+  if (row.station_id) {
+    const stationId = row.station_id.toUpperCase();
+    if (!trainsByStation.has(stationId)) {
+      trainsByStation.set(stationId, new Set());
+    }
+    trainsByStation.get(stationId)!.add(row.train_no);
+  }
 });
+
 // Sort each train's stops by (day_offset, seq)
 stopsByTrain.forEach((arr, key) => {
   arr.sort((a, b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
@@ -141,15 +160,26 @@ export function findTrains(originInput: string, destinationInput: string, date: 
   if (!origin || !destination) return [];
 
   const results: SimSearchResult[] = [];
-  (trains as SimTrain[]).forEach((t) => {
-    const stops = stopsByTrain.get(t.train_no);
+
+  // Optimization: Only check trains that stop at the origin station
+  const candidateTrains = trainsByStation.get(origin);
+  if (!candidateTrains) return [];
+
+  candidateTrains.forEach((trainNo) => {
+    const stops = stopsByTrain.get(trainNo);
     if (!stops || stops.length < 2) return;
 
     // find first occurrence of origin, then a later occurrence of destination
     const fromIdx = stops.findIndex((s) => s.station_id === origin);
+    // Should be found since we used the index, but safe check
     if (fromIdx === -1) return;
+
+    // Check if this train also stops at destination AFTER origin
     const toIdx = stops.findIndex((s, i) => i > fromIdx && s.station_id === destination);
     if (toIdx === -1) return;
+
+    const train = trainDetailsMap.get(trainNo);
+    if (!train) return;
 
     const dep = stops[fromIdx].departure || stops[fromIdx].arrival || "";
     const arr = stops[toIdx].arrival || stops[toIdx].departure || "";
@@ -162,16 +192,16 @@ export function findTrains(originInput: string, destinationInput: string, date: 
     const fromKm = stops[fromIdx].cum_distance_km || 0;
     const toKm = stops[toIdx].cum_distance_km || fromKm;
     const distKm = Math.max(0, toKm - fromKm);
-    const price = estimatePriceKm(distKm || 300, t.category || "");
+    const price = estimatePriceKm(distKm || 300, train.category || "");
 
     results.push({
-      trainNumber: t.train_no,
-      trainName: t.train_name,
+      trainNumber: train.train_no,
+      trainName: train.train_name,
       departureTime: dep,
       arrivalTime: arr,
       duration: minutesToDuration(durMin),
       price,
-      category: t.category,
+      category: train.category,
       from: origin,
       to: destination,
     });
