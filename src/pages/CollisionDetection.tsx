@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { MapPin, Train, Clock, Zap, AlertTriangle } from "lucide-react";
-import { useTrainStatus } from "@/hooks/useTrainStatus";
+import { useTrainStatus, TrainStatusItem } from "@/hooks/useTrainStatus";
 import { getTrainSchedule } from "@/lib/train-sim";
 
 const CollisionDetection = () => {
@@ -11,8 +11,8 @@ const CollisionDetection = () => {
   const { trains } = useTrainStatus();
 
   const groups = useMemo(() => {
-    const byStation = new Map<string, any[]>();
-    (trains || []).forEach((t: any) => {
+    const byStation = new Map<string, TrainStatusItem[]>();
+    (trains || []).forEach((t) => {
       const key = t.nextStation || "En Route";
       const arr = byStation.get(key) || [];
       arr.push(t);
@@ -23,7 +23,7 @@ const CollisionDetection = () => {
       return {
         id: String(idx + 1),
         name: station,
-        trains: arr.map((t: any) => ({
+        trains: arr.map((t) => ({
           id: String(t.id),
           name: String(t.name || "Unknown"),
           nextStation: station,
@@ -39,17 +39,17 @@ const CollisionDetection = () => {
   // Risk badges removed per request
 
   const totalTrains = (trains || []).length;
-  const activeStations = new Set((trains || []).map((t: any) => t.nextStation).filter(Boolean)).size;
+  const activeStations = new Set((trains || []).map((t) => t.nextStation).filter(Boolean)).size;
   const onTimePct = (() => {
     const list = trains || [];
     if (!list.length) return 0;
-    const ontime = list.filter((t: any) => String(t.status).toLowerCase().includes("on time")).length;
+    const ontime = list.filter((t) => String(t.status).toLowerCase().includes("on time")).length;
     return Math.round((ontime / list.length) * 1000) / 10;
   })();
   const averageSpeed = useMemo(() => {
     try {
       const speeds: number[] = [];
-      (trains || []).forEach((t: any) => {
+      (trains || []).forEach((t) => {
         const arr = getTrainSchedule(String(t.id));
         if (!arr || arr.length < 2) return;
 
