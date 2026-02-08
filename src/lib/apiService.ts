@@ -5,8 +5,19 @@ const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
+  private static cache = new Map<string, TouristSpot[]>();
+  private static MAX_CACHE_SIZE = 50; // Limit cache size to prevent memory leaks
+
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
     try {
+      // Round coordinates to increase cache hit rate for nearby locations (approx 11m precision)
+      const cacheKey = `${lat.toFixed(4)},${lon.toFixed(4)},${radius}`;
+
+      if (this.cache.has(cacheKey)) {
+        console.log(`Using cached attractions for ${cacheKey}`);
+        return [...this.cache.get(cacheKey)!];
+      }
+
       console.log(`Searching for attractions near lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
       
       // Search for tourist attractions using Geoapify
@@ -22,6 +33,8 @@ export class TouristSpotService {
       console.log(`Found ${data.features?.length || 0} attractions`);
       
       if (!data.features || data.features.length === 0) {
+        if (this.cache.size >= this.MAX_CACHE_SIZE) this.cache.clear();
+        this.cache.set(cacheKey, []);
         return [];
       }
       
@@ -49,6 +62,8 @@ export class TouristSpotService {
         };
       }).filter(Boolean); // Remove null entries
       
+      if (this.cache.size >= this.MAX_CACHE_SIZE) this.cache.clear();
+      this.cache.set(cacheKey, attractions);
       return attractions;
     } catch (error) {
       console.error('Error fetching tourist attractions:', error);
@@ -143,8 +158,19 @@ export class TouristSpotService {
 
 // Geoapify API service for hotels
 export class HotelService {
+  private static cache = new Map<string, Hotel[]>();
+  private static MAX_CACHE_SIZE = 50; // Limit cache size to prevent memory leaks
+
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
     try {
+      // Round coordinates to increase cache hit rate for nearby locations (approx 11m precision)
+      const cacheKey = `${lat.toFixed(4)},${lon.toFixed(4)},${radius}`;
+
+      if (this.cache.has(cacheKey)) {
+        console.log(`Using cached hotels for ${cacheKey}`);
+        return [...this.cache.get(cacheKey)!];
+      }
+
       const response = await fetch(
         `https://api.geoapify.com/v2/places?categories=accommodation.hotel&filter=circle:${lon},${lat},${radius}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
       );
@@ -156,6 +182,8 @@ export class HotelService {
       const data = await response.json();
       
       if (!data.features || data.features.length === 0) {
+        if (this.cache.size >= this.MAX_CACHE_SIZE) this.cache.clear();
+        this.cache.set(cacheKey, []);
         return [];
       }
       
@@ -176,6 +204,8 @@ export class HotelService {
         };
       });
       
+      if (this.cache.size >= this.MAX_CACHE_SIZE) this.cache.clear();
+      this.cache.set(cacheKey, hotels);
       return hotels;
     } catch (error) {
       console.error('Error fetching hotels:', error);
