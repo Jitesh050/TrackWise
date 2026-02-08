@@ -1,7 +1,24 @@
+
 import { Station, TouristSpot, Hotel } from './stationData';
 
 const OPENTRIPMAP_API_KEY = '5ae2e3f221c38a28845f05b6b3fa1b0ebc61af498e582315f53ae35d';
 const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
+
+interface GeoapifyFeature {
+  properties: {
+    name?: string;
+    categories?: string[];
+    phone?: string;
+    website?: string;
+    formatted?: string;
+    image_url?: string;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    [key: string]: any;
+  };
+  geometry: {
+    coordinates: number[]; // [lon, lat]
+  };
+}
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
@@ -38,7 +55,7 @@ export class TouristSpotService {
         return [];
       }
       
-      const attractions: TouristSpot[] = data.features.map((feature: any) => {
+      const attractions: TouristSpot[] = data.features.map((feature: GeoapifyFeature) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
         
@@ -82,7 +99,7 @@ export class TouristSpotService {
     return R * c;
   }
   
-  private static getAttractionType(properties: any): string {
+  private static getAttractionType(properties: GeoapifyFeature['properties']): string {
     const name = properties.name?.toLowerCase() || '';
     const categories = properties.categories || [];
     
@@ -187,7 +204,7 @@ export class HotelService {
         return [];
       }
       
-      const hotels: Hotel[] = data.features.map((feature: any) => {
+      const hotels: Hotel[] = data.features.map((feature: GeoapifyFeature) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
         
