@@ -12,7 +12,6 @@ interface GeoapifyFeature {
     website?: string;
     formatted?: string;
     image_url?: string;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
   };
   geometry: {
