@@ -26,6 +26,11 @@ export default tseslint.config(
       "@typescript-eslint/no-unused-vars": "off",
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-unused-expressions": "off",
+      "prefer-const": "off",
+      "no-empty": "off",
+      "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "no-useless-escape": "off",
     },
     linterOptions: {
       reportUnusedDisableDirectives: "off",
