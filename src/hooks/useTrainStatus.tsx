@@ -2,10 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react'
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import trainsData from '../../simulation/trains_100.json'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import schedulesData from '../../simulation/schedules_100.json'
-import { getAllStationsWithNames } from '@/lib/train-sim'
+import { getAllStationsWithNames, getTrainSchedule, SimStop } from '@/lib/train-sim'
 
 // --- Types ---
 export interface TrainRecord {
@@ -58,14 +55,14 @@ export interface UseTrainStatusReturn {
 }
 
 // --- Load simulation data ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TRAINS_DATA: TrainRecord[] = (trainsData as any) as TrainRecord[]
-const SCHEDULES_DATA: ScheduleRecord[] = (schedulesData as any) as ScheduleRecord[]
 
 // Build station name map from simulation helper
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
   const map: Record<string, string> = {}
-  entries.forEach((s: any) => { map[s.code] = s.name })
+  entries.forEach((s) => { map[s.code] = s.name })
   return map
 })()
 
@@ -84,7 +81,8 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
 
   TRAINS_DATA.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
+    // Use O(1) lookup instead of O(M) filter
+    const trainSchedules: SimStop[] = getTrainSchedule(trainNo) || []
     if (trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
@@ -96,7 +94,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     let delay = 0
     let nextStation = ''
     let currentDeparture = sourceStation.departure
-    let currentArrival = destStation.arrival
+    const currentArrival = destStation.arrival
     const platform = (parseInt(trainNo.slice(-1)) % 10) + 1
 
     let currentLegIndex = -1
