@@ -60,6 +60,14 @@ stopsByTrain.forEach((arr, key) => {
   stopsByTrain.set(key, arr);
 });
 
+export function getAllTrains(): SimTrain[] {
+  return trains as SimTrain[];
+}
+
+export function getTrainSchedule(trainNo: string): SimStop[] | undefined {
+  return stopsByTrain.get(trainNo);
+}
+
 // Unique station codes present in schedules
 let _allStationsCache: string[] | null = null;
 export function getAllStations(): string[] {
