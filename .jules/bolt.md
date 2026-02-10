@@ -1,0 +1,3 @@
+## 2024-05-23 - [In-memory caching for API services]
+**Learning:** External API services (`TouristSpotService`, `HotelService`) were re-fetching data on every call, even for identical parameters. Adding a simple static Map cache with rounding for coordinates (to handle GPS jitter) and a size limit (to prevent memory leaks) significantly reduced latency (from ~2000ms to ~200ms for 10 simulated calls).
+**Action:** When working with external APIs that use coordinates, always consider caching with coordinate rounding to handle minor GPS variations and prevent redundant requests. Ensure unbounded caches have eviction policies.

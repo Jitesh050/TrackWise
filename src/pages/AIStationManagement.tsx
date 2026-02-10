@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,7 +35,7 @@ const AIStationManagement = () => {
       .sort((a,b) => a.station.localeCompare(b.station));
   }, [trains]);
 
-  const speak = (text: string) => {
+  const speak = useCallback((text: string) => {
     try {
       if (typeof window !== 'undefined' && (window as any).speechSynthesis) {
         const u = new SpeechSynthesisUtterance(text);
@@ -44,9 +44,9 @@ const AIStationManagement = () => {
     } catch {
       // ignore
     }
-  };
+  }, []);
 
-  const addAnnouncement = (station: string, message: string, type: "arrival" | "delay") => {
+  const addAnnouncement = useCallback((station: string, message: string, type: "arrival" | "delay") => {
     const entry: StationAnnouncement = {
       id: Math.random().toString(36).slice(2),
       station,
@@ -56,7 +56,7 @@ const AIStationManagement = () => {
     };
     setAnnouncements((prev) => [entry, ...prev].slice(0, 100));
     speak(message);
-  };
+  }, [speak]);
 
   const handleAnnounceArrivals = (station: string, list: any[]) => {
     // Announce trains whose ETA time string is within the next 30 minutes if available, else all next 3
@@ -142,7 +142,7 @@ const AIStationManagement = () => {
     tick();
     const interval = setInterval(tick, 30000);
     return () => clearInterval(interval);
-  }, [trains]);
+  }, [trains, addAnnouncement]);
 
   const visibleGroups = groups.filter(g => !filter || g.station.toLowerCase().includes(filter.toLowerCase()));
 
