@@ -60,6 +60,23 @@ stopsByTrain.forEach((arr, key) => {
   stopsByTrain.set(key, arr);
 });
 
+// Build inverted index: Station -> List of trains stopping there
+const trainsByStation: Map<string, SimTrain[]> = new Map();
+(trains as SimTrain[]).forEach((t) => {
+  const stops = stopsByTrain.get(t.train_no);
+  if (!stops) return;
+  stops.forEach((stop) => {
+    if (!stop.station_id) return;
+    const stationId = stop.station_id.toUpperCase();
+    const list = trainsByStation.get(stationId) || [];
+    // Avoid duplicates if a train stops at the same station multiple times (circular route)
+    if (!list.includes(t)) {
+      list.push(t);
+      trainsByStation.set(stationId, list);
+    }
+  });
+});
+
 // Unique station codes present in schedules
 let _allStationsCache: string[] | null = null;
 export function getAllStations(): string[] {
@@ -141,7 +158,9 @@ export function findTrains(originInput: string, destinationInput: string, date: 
   if (!origin || !destination) return [];
 
   const results: SimSearchResult[] = [];
-  (trains as SimTrain[]).forEach((t) => {
+  // Use inverted index for O(1) candidate lookup instead of O(N) scan
+  const candidates = trainsByStation.get(origin) || [];
+  candidates.forEach((t) => {
     const stops = stopsByTrain.get(t.train_no);
     if (!stops || stops.length < 2) return;
 
