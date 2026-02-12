@@ -47,7 +47,7 @@ export interface UseTrainStatusReturn {
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
   const map: Record<string, string> = {}
-  entries.forEach((s: any) => { map[s.code] = s.name })
+  entries.forEach((s) => { map[s.code] = s.name })
   return map
 })()
 
@@ -79,7 +79,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     let delay = 0
     let nextStation = ''
     let currentDeparture = sourceStation.departure
-    let currentArrival = destStation.arrival
+    const currentArrival = destStation.arrival
     const platform = (parseInt(trainNo.slice(-1)) % 10) + 1
 
     let currentLegIndex = -1
