@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,16 @@ import { Search, Filter, ArrowRight } from "lucide-react";
 import TrainStatusCard from "@/components/TrainStatusCard";
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 
+const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+  const s = (status || "").toLowerCase();
+  if (s.includes("cancel")) return "cancelled";
+  if (s.includes("board")) return "boarding";
+  if (s.includes("delay")) return "delayed";
+  return "ontime";
+};
+
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
   const [params] = useSearchParams();
@@ -22,17 +29,10 @@ const TrainStatus = () => {
     if (q) setSearchQuery(q);
   }, [params]);
 
-  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-    const s = (status || "").toLowerCase();
-    if (s.includes("cancel")) return "cancelled";
-    if (s.includes("board")) return "boarding";
-    if (s.includes("delay")) return "delayed";
-    return "ontime";
-  };
-  
-  // Filter trains from hook based on search and active tab
-  useEffect(() => {
-    const list = (trains || []).map((t: any) => ({
+  // Optimization: Memoize the mapped trains to avoid re-mapping on every render/search.
+  // This only updates when the underlying 'trains' data changes (e.g., from the simulation hook).
+  const mappedTrains = useMemo(() => {
+    return (trains || []).map((t: any) => ({
       id: String(t.id),
       trainNumber: String(t.id),
       trainName: String(t.name || ""),
@@ -46,9 +46,14 @@ const TrainStatus = () => {
       progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
       nextStation: t.nextStation,
     }));
+  }, [trains]);
 
+  // Optimization: Memoize the filtering logic.
+  // This depends on 'mappedTrains', 'searchQuery', and 'activeTab'.
+  // Using useMemo prevents double renders that occurred with the previous useEffect approach.
+  const filteredTrains = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    let results = list.filter((train) =>
+    let results = mappedTrains.filter((train) =>
       !query ||
       train.trainNumber.toLowerCase().includes(query) ||
       train.trainName.toLowerCase().includes(query) ||
@@ -59,13 +64,12 @@ const TrainStatus = () => {
     if (activeTab !== "all") {
       results = results.filter((train) => train.status === activeTab);
     }
-
-    setFilteredTrains(results);
-  }, [searchQuery, activeTab, trains]);
+    return results;
+  }, [mappedTrains, searchQuery, activeTab]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Search is already handled by useEffect
+    // Search is reactive via useMemo
   };
   
   const handleTabChange = (value: string) => {
