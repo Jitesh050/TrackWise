@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, ArrowRight } from "lucide-react";
 import TrainStatusCard from "@/components/TrainStatusCard";
-import { useTrainStatus, type TrainStatusItem } from "@/hooks/useTrainStatus";
+import { useTrainStatus, type TrainStatusItem } from "../hooks/useTrainStatus";
 
 // Helper function defined outside to prevent recreation on re-renders
 const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
