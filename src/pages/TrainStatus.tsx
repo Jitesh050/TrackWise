@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,11 +7,19 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, ArrowRight } from "lucide-react";
 import TrainStatusCard from "@/components/TrainStatusCard";
-import { useTrainStatus } from "@/hooks/useTrainStatus";
+import { useTrainStatus, type TrainStatusItem } from "@/hooks/useTrainStatus";
+
+// Helper function defined outside to prevent recreation on re-renders
+const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+  const s = (status || "").toLowerCase();
+  if (s.includes("cancel")) return "cancelled";
+  if (s.includes("board")) return "boarding";
+  if (s.includes("delay")) return "delayed";
+  return "ontime";
+};
 
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
   const [params] = useSearchParams();
@@ -22,17 +30,9 @@ const TrainStatus = () => {
     if (q) setSearchQuery(q);
   }, [params]);
 
-  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-    const s = (status || "").toLowerCase();
-    if (s.includes("cancel")) return "cancelled";
-    if (s.includes("board")) return "boarding";
-    if (s.includes("delay")) return "delayed";
-    return "ontime";
-  };
-  
-  // Filter trains from hook based on search and active tab
-  useEffect(() => {
-    const list = (trains || []).map((t: any) => ({
+  // Optimize: Memoize formatting to avoid re-mapping on every render or search change
+  const formattedTrains = useMemo(() => {
+    return (trains || []).map((t: TrainStatusItem) => ({
       id: String(t.id),
       trainNumber: String(t.id),
       trainName: String(t.name || ""),
@@ -46,9 +46,12 @@ const TrainStatus = () => {
       progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
       nextStation: t.nextStation,
     }));
+  }, [trains]);
 
+  // Optimize: Derive filtered state directly to prevent double renders
+  const filteredTrains = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    let results = list.filter((train) =>
+    let results = formattedTrains.filter((train) =>
       !query ||
       train.trainNumber.toLowerCase().includes(query) ||
       train.trainName.toLowerCase().includes(query) ||
@@ -59,9 +62,8 @@ const TrainStatus = () => {
     if (activeTab !== "all") {
       results = results.filter((train) => train.status === activeTab);
     }
-
-    setFilteredTrains(results);
-  }, [searchQuery, activeTab, trains]);
+    return results;
+  }, [formattedTrains, searchQuery, activeTab]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
