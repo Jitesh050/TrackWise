@@ -6,7 +6,7 @@ import { MapPin, Train, Clock, Zap, AlertTriangle } from "lucide-react";
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import schedules from "../../simulation/schedules_100.json";
+import schedules from "../data/simulation/schedules_100.json";
 
 const CollisionDetection = () => {
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);

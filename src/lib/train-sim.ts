@@ -5,13 +5,13 @@
 // - Price is estimated from cumulative distance and train category.
 
 // Import JSON directly (Vite supports JSON imports)
-// Paths: from src/lib -> ../../simulation/*.json
+// Paths: from src/lib -> ../data/simulation/*.json
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import trains from "../../simulation/trains_100.json";
+import trains from "../data/simulation/trains_100.json";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import schedules from "../../simulation/schedules_100.json";
+import schedules from "../data/simulation/schedules_100.json";
 
 export type SimTrain = {
   train_no: string;
