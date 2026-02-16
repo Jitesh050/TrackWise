@@ -47,12 +47,30 @@ export type SimSearchResult = {
   to: string;
 };
 
-// Build stops per train number
+// Build stops per train number & station index
 const stopsByTrain: Map<string, SimStop[]> = new Map();
+const trainsByStation: Map<string, Set<string>> = new Map();
+const trainsMap: Map<string, SimTrain> = new Map();
+
+// Index trains for O(1) lookup
+(trains as SimTrain[]).forEach((t) => {
+  trainsMap.set(t.train_no, t);
+});
+
 (schedules as SimStop[]).forEach((row) => {
+  // stopsByTrain
   const arr = stopsByTrain.get(row.train_no) || [];
   arr.push(row);
   stopsByTrain.set(row.train_no, arr);
+
+  // trainsByStation (inverted index)
+  if (row.station_id) {
+    const st = row.station_id.toUpperCase();
+    if (!trainsByStation.has(st)) {
+      trainsByStation.set(st, new Set());
+    }
+    trainsByStation.get(st)!.add(row.train_no);
+  }
 });
 // Sort each train's stops by (day_offset, seq)
 stopsByTrain.forEach((arr, key) => {
@@ -141,8 +159,16 @@ export function findTrains(originInput: string, destinationInput: string, date: 
   if (!origin || !destination) return [];
 
   const results: SimSearchResult[] = [];
-  (trains as SimTrain[]).forEach((t) => {
-    const stops = stopsByTrain.get(t.train_no);
+
+  // Optimization: Only iterate trains that stop at origin
+  const candidateTrainNos = trainsByStation.get(origin);
+  if (!candidateTrainNos) return [];
+
+  candidateTrainNos.forEach((trainNo) => {
+    const t = trainsMap.get(trainNo);
+    if (!t) return;
+
+    const stops = stopsByTrain.get(trainNo);
     if (!stops || stops.length < 2) return;
 
     // find first occurrence of origin, then a later occurrence of destination
