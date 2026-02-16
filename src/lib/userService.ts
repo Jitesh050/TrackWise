@@ -1,7 +1,22 @@
 import { User } from "@/hooks/useAuth";
+import { db, storage, auth } from "@/lib/firebase";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  serverTimestamp,
+  Timestamp,
+  DocumentSnapshot
+} from "firebase/firestore";
+import {
+  ref,
+  uploadBytes,
+  getDownloadURL,
+} from "firebase/storage";
+import { deleteUser } from "firebase/auth";
 
-// Mock API service for user profile management
-// In a real application, this would make HTTP requests to your backend API
+// User profile service using Firebase Firestore and Storage
 
 export interface UserProfileUpdate {
   firstName?: string;
@@ -23,35 +38,36 @@ export interface UserProfileResponse {
 }
 
 class UserService {
-  private baseUrl = '/api/users'; // This would be your actual backend API URL
-
-  // Mock implementation - replace with actual API calls
+  // Implementation using Firebase
   async getUserProfile(userId: string): Promise<UserProfileResponse> {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      // Mock user data - in real app, this would be fetched from backend
-      const mockUser: User = {
-        id: userId,
-        email: 'user@example.com',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+1 (555) 123-4567',
-        dateOfBirth: '1990-01-01',
-        address: '123 Main Street',
-        city: 'New York',
-        state: 'NY',
-        zipCode: '10001',
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z'
-      };
+      // Try 'users' collection first
+      const userRef = doc(db, 'users', userId);
+      let userSnap = await getDoc(userRef);
+      let role: 'user' | 'admin' = 'user';
+
+      if (!userSnap.exists()) {
+        // Try 'admins' collection
+        const adminRef = doc(db, 'admins', userId);
+        userSnap = await getDoc(adminRef);
+        role = 'admin';
+      }
+
+      if (!userSnap.exists()) {
+        return {
+          success: false,
+          error: 'User not found'
+        };
+      }
+
+      const user = this.convertDocToUser(userSnap, role);
 
       return {
         success: true,
-        user: mockUser
+        user: user
       };
     } catch (error) {
+      console.error("Error fetching user profile:", error);
       return {
         success: false,
         error: 'Failed to fetch user profile'
@@ -61,17 +77,7 @@ class UserService {
 
   async updateUserProfile(userId: string, profileData: UserProfileUpdate): Promise<UserProfileResponse> {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Mock validation
-      if (!profileData.firstName || !profileData.lastName) {
-        return {
-          success: false,
-          error: 'First name and last name are required'
-        };
-      }
-
+      // Validate inputs
       if (profileData.email && !this.isValidEmail(profileData.email)) {
         return {
           success: false,
@@ -86,28 +92,41 @@ class UserService {
         };
       }
 
-      // Mock updated user data
-      const updatedUser: User = {
-        id: userId,
-        email: profileData.email || 'user@example.com',
-        firstName: profileData.firstName,
-        lastName: profileData.lastName,
-        phone: profileData.phone || '+1 (555) 123-4567',
-        dateOfBirth: profileData.dateOfBirth || '1990-01-01',
-        address: profileData.address || '123 Main Street',
-        city: profileData.city || 'New York',
-        state: profileData.state || 'NY',
-        zipCode: profileData.zipCode || '10001',
-        profilePicture: profileData.profilePicture,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: new Date().toISOString()
-      };
+      // Check which collection the user is in
+      let collectionName = 'users';
+      let userRef = doc(db, 'users', userId);
+      let userSnap = await getDoc(userRef);
+
+      if (!userSnap.exists()) {
+        userRef = doc(db, 'admins', userId);
+        userSnap = await getDoc(userRef);
+        collectionName = 'admins';
+      }
+
+      if (!userSnap.exists()) {
+        return {
+          success: false,
+          error: 'User not found'
+        };
+      }
+
+      // Update the document
+      await updateDoc(userRef, {
+        ...profileData,
+        updatedAt: serverTimestamp()
+      });
+
+      // Fetch the updated data to return
+      const updatedSnap = await getDoc(userRef);
+      const user = this.convertDocToUser(updatedSnap, collectionName === 'admins' ? 'admin' : 'user');
 
       return {
         success: true,
-        user: updatedUser
+        user: user
       };
+
     } catch (error) {
+      console.error("Error updating user profile:", error);
       return {
         success: false,
         error: 'Failed to update user profile'
@@ -117,10 +136,7 @@ class UserService {
 
   async uploadProfilePicture(userId: string, file: File): Promise<{ success: boolean; url?: string; error?: string }> {
     try {
-      // Simulate file upload delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Mock file validation
+      // File validation
       if (!file.type.startsWith('image/')) {
         return {
           success: false,
@@ -135,14 +151,22 @@ class UserService {
         };
       }
 
-      // Mock successful upload - return a mock URL
-      const mockUrl = `https://api.trackwise.com/uploads/profiles/${userId}-${Date.now()}.jpg`;
+      // Create a reference to the file location
+      // Using a timestamp to avoid caching issues if re-uploaded
+      const storageRef = ref(storage, `profile-pictures/${userId}/${Date.now()}_${file.name}`);
+
+      // Upload the file
+      await uploadBytes(storageRef, file);
+
+      // Get the download URL
+      const url = await getDownloadURL(storageRef);
       
       return {
         success: true,
-        url: mockUrl
+        url: url
       };
     } catch (error) {
+      console.error("Error uploading profile picture:", error);
       return {
         success: false,
         error: 'Failed to upload profile picture'
@@ -152,17 +176,45 @@ class UserService {
 
   async deleteUserAccount(userId: string): Promise<{ success: boolean; error?: string }> {
     try {
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Delete Firestore document
+      // Check 'users' first
+      let userRef = doc(db, 'users', userId);
+      let userSnap = await getDoc(userRef);
+
+      if (userSnap.exists()) {
+        await deleteDoc(userRef);
+      } else {
+        // Check 'admins'
+        userRef = doc(db, 'admins', userId);
+        userSnap = await getDoc(userRef);
+        if (userSnap.exists()) {
+          await deleteDoc(userRef);
+        }
+        // If neither exists, we can still proceed to delete Auth user if it matches
+      }
+
+      // Delete Auth user if it matches the current user
+      const currentUser = auth.currentUser;
+      if (currentUser && currentUser.uid === userId) {
+        await deleteUser(currentUser);
+      } else {
+        // If the user being deleted is not the current user, we can't delete the Auth account from the client SDK
+        // (unless we are admin using Admin SDK, which is not available in client)
+        // We just return success for the data deletion part, or warn
+        if (!currentUser || currentUser.uid !== userId) {
+            console.warn("Deleted user data, but could not delete Auth account (requires current user login or admin SDK)");
+        }
+      }
       
-      // Mock account deletion
       return {
         success: true
       };
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Error deleting user account:", error);
+      // If it's an auth error (e.g. requires-recent-login), pass it through
       return {
         success: false,
-        error: 'Failed to delete account'
+        error: error.message || 'Failed to delete account'
       };
     }
   }
@@ -175,6 +227,26 @@ class UserService {
   private isValidPhone(phone: string): boolean {
     const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
     return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
+  }
+
+  private convertDocToUser(docSnap: DocumentSnapshot, role: 'user' | 'admin'): User {
+    const data = docSnap.data();
+    if (!data) return { id: docSnap.id, role } as User; // Should ideally throw or return null if data is missing but calling context checks exists()
+
+    const user: any = { ...data, id: docSnap.id, role };
+
+    // Convert Timestamps to ISO strings
+    if (user.createdAt instanceof Timestamp) {
+      user.createdAt = user.createdAt.toDate().toISOString();
+    }
+    if (user.updatedAt instanceof Timestamp) {
+      user.updatedAt = user.updatedAt.toDate().toISOString();
+    }
+    if (user.dateOfBirth instanceof Timestamp) {
+      user.dateOfBirth = user.dateOfBirth.toDate().toISOString();
+    }
+
+    return user as User;
   }
 }
 

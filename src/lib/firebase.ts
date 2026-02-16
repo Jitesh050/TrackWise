@@ -1,6 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getAuth, setPersistence, inMemoryPersistence, signOut } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string,
@@ -46,4 +47,5 @@ void setPersistence(auth, inMemoryPersistence)
     // ignore; default persistence applies
   });
 export const db = getFirestore(app);
+export const storage = getStorage(app);
 export default app;
