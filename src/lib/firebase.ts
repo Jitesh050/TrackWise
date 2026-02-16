@@ -1,7 +1,7 @@
-import { initializeApp, getApps } from 'firebase/app';
-import { getAuth, setPersistence, inMemoryPersistence, signOut } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
-import { getStorage } from 'firebase/storage';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
+import { getAuth, setPersistence, inMemoryPersistence, signOut, Auth } from 'firebase/auth';
+import { getFirestore, Firestore } from 'firebase/firestore';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY as string,
@@ -25,27 +25,43 @@ const requiredKeys: Array<keyof typeof firebaseConfig> = [
 const missing = requiredKeys.filter((k) => !firebaseConfig[k]);
 if (missing.length) {
   // Provide a clear console error to guide setup
-  // eslint-disable-next-line no-console
   console.error(
     `Firebase env missing/invalid: ${missing.join(', ')}.\n` +
     'Add your Firebase Web App config to a .env file using VITE_FIREBASE_* keys and restart the dev server.'
   );
 }
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
 
-export const auth = getAuth(app);
-// Ensure sessions are not restored across reloads or new tabs (always require fresh login)
-void setPersistence(auth, inMemoryPersistence)
-  .then(() => {
-    // Clear any previously persisted session from older persistence
-    if (auth.currentUser) {
-      return signOut(auth);
-    }
-  })
-  .catch(() => {
-    // ignore; default persistence applies
-  });
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+try {
+  app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  auth = getAuth(app);
+  db = getFirestore(app);
+  storage = getStorage(app);
+
+  // Ensure sessions are not restored across reloads or new tabs (always require fresh login)
+  void setPersistence(auth, inMemoryPersistence)
+    .then(() => {
+      // Clear any previously persisted session from older persistence
+      if (auth.currentUser) {
+        return signOut(auth);
+      }
+    })
+    .catch(() => {
+      // ignore; default persistence applies
+    });
+} catch (error) {
+  console.error("Failed to initialize Firebase:", error);
+  // Mock objects to prevent crash on module import
+  // This allows the app to load even if Firebase is misconfigured, preventing white screen on critical error
+  app = {} as FirebaseApp;
+  auth = {} as Auth;
+  db = {} as Firestore;
+  storage = {} as FirebaseStorage;
+}
+
+export { app, auth, db, storage };
 export default app;
