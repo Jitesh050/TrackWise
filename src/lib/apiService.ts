@@ -169,7 +169,7 @@ export class HotelService {
           price: this.getRandomPrice(),
           distance: `${distance.toFixed(1)} km from station`,
           amenities: this.getRandomAmenities(),
-          phone: properties.phone || '+91-XXXX-XXXXXX',
+          phone: properties.contact?.phone || properties.phone || 'Phone number not available',
           website: properties.website || `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(properties.name || 'hotel')}`,
           address: properties.formatted || 'Address not available',
           imageUrl: properties.image_url || undefined
