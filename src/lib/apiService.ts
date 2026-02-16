@@ -3,6 +3,8 @@ import { Station, TouristSpot, Hotel } from './stationData';
 const OPENTRIPMAP_API_KEY = '5ae2e3f221c38a28845f05b6b3fa1b0ebc61af498e582315f53ae35d';
 const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
+export const PHONE_PLACEHOLDER = '+91-XXXX-XXXXXX';
+
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
@@ -169,7 +171,7 @@ export class HotelService {
           price: this.getRandomPrice(),
           distance: `${distance.toFixed(1)} km from station`,
           amenities: this.getRandomAmenities(),
-          phone: properties.phone || '+91-XXXX-XXXXXX',
+          phone: properties.phone || PHONE_PLACEHOLDER,
           website: properties.website || `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(properties.name || 'hotel')}`,
           address: properties.formatted || 'Address not available',
           imageUrl: properties.image_url || undefined

@@ -5,6 +5,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { MapPin, Star, Clock, ExternalLink, RefreshCw, Phone } from 'lucide-react';
 import { stations } from '@/lib/stationData';
 import { useStationDetails } from '@/hooks/useStationDetails';
+import { PHONE_PLACEHOLDER } from '@/lib/apiService';
 import ChatBot from '@/components/ChatBot';
 
 const TripPlannerPage = () => {
@@ -106,7 +107,7 @@ const TripPlannerPage = () => {
                               <MapPin className="h-4 w-4" />
                               <span className="font-medium">{hotel.distance}</span>
                             </div>
-                            {hotel.phone !== '+91-XXXX-XXXXXX' && (
+                            {hotel.phone !== PHONE_PLACEHOLDER && (
                               <div className="flex items-center gap-1">
                                 <Phone className="h-4 w-4" />
                                 <span>{hotel.phone}</span>

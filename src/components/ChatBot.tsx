@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageCircle, Send, Mic, MicOff, User, Bot, MapPin, Star, Clock, ExternalLink, Heart, Share2, Filter, Phone, Navigation, RefreshCw, Info } from "lucide-react";
 import { stations, Station, TouristSpot, Hotel } from "@/lib/stationData";
-import { TouristSpotService, HotelService } from "@/lib/apiService";
+import { TouristSpotService, HotelService, PHONE_PLACEHOLDER } from "@/lib/apiService";
 const CHATBOT_API = import.meta.env.VITE_CHATBOT_API_URL as string | undefined;
 
 interface Message {
@@ -224,7 +224,9 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
       const hotel = item as Hotel;
       
       if (q.includes('phone') || q.includes('number') || q.includes('contact')) {
-        answer = `The phone number of ${hotel.name} is ${hotel.phone}`;
+        answer = hotel.phone === PHONE_PLACEHOLDER
+          ? `I'm sorry, the phone number for ${hotel.name} is currently unavailable.`
+          : `The phone number of ${hotel.name} is ${hotel.phone}`;
       } else if (q.includes('distance') || q.includes('far') || q.includes('how far')) {
         answer = `${hotel.name} is located ${hotel.distance} from ${discover.selectedStation?.name} station.`;
       } else if (q.includes('amenities') || q.includes('facilities') || q.includes('features')) {
@@ -238,7 +240,8 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
       } else if (q.includes('rating') || q.includes('stars') || q.includes('review')) {
         answer = `${hotel.name} has a rating of ${hotel.rating} stars.`;
       } else {
-        answer = `Here's information about ${hotel.name}:\n\n• Rating: ${hotel.rating} stars\n• Price: ${hotel.price}\n• Distance: ${hotel.distance}\n• Address: ${hotel.address}\n• Phone: ${hotel.phone}\n• Amenities: ${hotel.amenities.join(', ')}\n• Website: ${hotel.website}`;
+        const phoneText = hotel.phone === PHONE_PLACEHOLDER ? 'Not Available' : hotel.phone;
+        answer = `Here's information about ${hotel.name}:\n\n• Rating: ${hotel.rating} stars\n• Price: ${hotel.price}\n• Distance: ${hotel.distance}\n• Address: ${hotel.address}\n• Phone: ${phoneText}\n• Amenities: ${hotel.amenities.join(', ')}\n• Website: ${hotel.website}`;
       }
     } else {
       const attraction = item as TouristSpot;
@@ -956,7 +959,7 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
                         <MapPin className="h-3 w-3" />
                         <span>{hotel.distance}</span>
                       </div>
-                      {(hotel as Hotel).phone !== '+91-XXXX-XXXXXX' && (
+                      {(hotel as Hotel).phone !== PHONE_PLACEHOLDER && (
                         <div className="flex items-center gap-1">
                           <Phone className="h-3 w-3" />
                           <span>{(hotel as Hotel).phone}</span>
