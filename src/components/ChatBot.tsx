@@ -8,25 +8,6 @@ import { MessageCircle, Send, Mic, MicOff, User, Bot, MapPin, Star, Clock, Exter
 import { stations, Station, TouristSpot, Hotel } from "@/lib/stationData";
 import { TouristSpotService, HotelService } from "@/lib/apiService";
 
-// Web Speech API type definitions
-interface SpeechRecognition extends EventTarget {
-  continuous: boolean;
-  interimResults: boolean;
-  lang: string;
-  start(): void;
-  stop(): void;
-  onresult: (event: any) => void;
-  onend: () => void;
-  onerror: (event: any) => void;
-}
-
-declare global {
-  interface Window {
-    SpeechRecognition: any;
-    webkitSpeechRecognition: any;
-  }
-}
-
 const CHATBOT_API = import.meta.env.VITE_CHATBOT_API_URL as string | undefined;
 
 interface Message {
