@@ -7,6 +7,26 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MessageCircle, Send, Mic, MicOff, User, Bot, MapPin, Star, Clock, ExternalLink, Heart, Share2, Filter, Phone, Navigation, RefreshCw, Info } from "lucide-react";
 import { stations, Station, TouristSpot, Hotel } from "@/lib/stationData";
 import { TouristSpotService, HotelService } from "@/lib/apiService";
+
+// Web Speech API type definitions
+interface SpeechRecognition extends EventTarget {
+  continuous: boolean;
+  interimResults: boolean;
+  lang: string;
+  start(): void;
+  stop(): void;
+  onresult: (event: any) => void;
+  onend: () => void;
+  onerror: (event: any) => void;
+}
+
+declare global {
+  interface Window {
+    SpeechRecognition: any;
+    webkitSpeechRecognition: any;
+  }
+}
+
 const CHATBOT_API = import.meta.env.VITE_CHATBOT_API_URL as string | undefined;
 
 interface Message {
@@ -66,6 +86,7 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
   const [showFilters, setShowFilters] = useState(false);
   const [favorites, setFavorites] = useState<{hotels: string[], attractions: string[]}>({hotels: [], attractions: []});
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,6 +95,37 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  useEffect(() => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInputText(transcript);
+        setIsListening(false);
+      };
+
+      recognition.onerror = (event: any) => {
+        console.error('Speech recognition error', event.error);
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognitionRef.current = recognition;
+
+      return () => {
+        recognition.abort();
+      };
+    }
+  }, []);
 
   // Utility functions
   const toggleFavorite = (itemId: string, type: 'hotels' | 'attractions') => {
@@ -463,15 +515,20 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
 
   const toggleVoiceInput = () => {
     if (isListening) {
+      recognitionRef.current?.stop();
       setIsListening(false);
-      // Stop speech recognition
     } else {
-      setIsListening(true);
-      // Start speech recognition (would require Web Speech API implementation)
-      setTimeout(() => {
-        setIsListening(false);
-        setInputText("I want to book a ticket from New York to Boston");
-      }, 3000);
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.start();
+          setIsListening(true);
+        } catch (error) {
+          console.error("Error starting speech recognition:", error);
+          setIsListening(false);
+        }
+      } else {
+        alert("Speech recognition is not supported in this browser.");
+      }
     }
   };
 
