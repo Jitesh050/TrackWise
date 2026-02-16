@@ -106,7 +106,7 @@ const TripPlannerPage = () => {
                               <MapPin className="h-4 w-4" />
                               <span className="font-medium">{hotel.distance}</span>
                             </div>
-                            {hotel.phone !== '+91-XXXX-XXXXXX' && (
+                            {hotel.phone && (
                               <div className="flex items-center gap-1">
                                 <Phone className="h-4 w-4" />
                                 <span>{hotel.phone}</span>

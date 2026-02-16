@@ -24,7 +24,7 @@ export interface Hotel {
   price: string;
   distance: string;
   amenities: string[];
-  phone: string;
+  phone?: string;
   website: string;
   address: string;
   imageUrl?: string;

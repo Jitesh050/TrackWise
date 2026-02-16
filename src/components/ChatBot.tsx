@@ -224,7 +224,9 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
       const hotel = item as Hotel;
       
       if (q.includes('phone') || q.includes('number') || q.includes('contact')) {
-        answer = `The phone number of ${hotel.name} is ${hotel.phone}`;
+        answer = hotel.phone
+          ? `The phone number of ${hotel.name} is ${hotel.phone}`
+          : `I'm sorry, but I don't have the phone number for ${hotel.name}.`;
       } else if (q.includes('distance') || q.includes('far') || q.includes('how far')) {
         answer = `${hotel.name} is located ${hotel.distance} from ${discover.selectedStation?.name} station.`;
       } else if (q.includes('amenities') || q.includes('facilities') || q.includes('features')) {
@@ -238,7 +240,7 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
       } else if (q.includes('rating') || q.includes('stars') || q.includes('review')) {
         answer = `${hotel.name} has a rating of ${hotel.rating} stars.`;
       } else {
-        answer = `Here's information about ${hotel.name}:\n\n• Rating: ${hotel.rating} stars\n• Price: ${hotel.price}\n• Distance: ${hotel.distance}\n• Address: ${hotel.address}\n• Phone: ${hotel.phone}\n• Amenities: ${hotel.amenities.join(', ')}\n• Website: ${hotel.website}`;
+        answer = `Here's information about ${hotel.name}:\n\n• Rating: ${hotel.rating} stars\n• Price: ${hotel.price}\n• Distance: ${hotel.distance}\n• Address: ${hotel.address}\n• Phone: ${hotel.phone || 'Not available'}\n• Amenities: ${hotel.amenities.join(', ')}\n• Website: ${hotel.website}`;
       }
     } else {
       const attraction = item as TouristSpot;
@@ -956,7 +958,7 @@ const [trainStatusPNR, setTrainStatusPNR] = useState<string>("");
                         <MapPin className="h-3 w-3" />
                         <span>{hotel.distance}</span>
                       </div>
-                      {(hotel as Hotel).phone !== '+91-XXXX-XXXXXX' && (
+                      {(hotel as Hotel).phone && (
                         <div className="flex items-center gap-1">
                           <Phone className="h-3 w-3" />
                           <span>{(hotel as Hotel).phone}</span>
