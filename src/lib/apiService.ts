@@ -5,7 +5,18 @@ const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
+  private static cache = new Map<string, TouristSpot[]>();
+  private static readonly MAX_CACHE_SIZE = 50;
+
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
+    const cacheKey = `${lat},${lon},${radius}`;
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey) || [];
+      this.cache.delete(cacheKey);
+      this.cache.set(cacheKey, cached);
+      return [...cached];
+    }
+
     try {
       console.log(`Searching for attractions near lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
       
@@ -21,11 +32,9 @@ export class TouristSpotService {
       const data = await response.json();
       console.log(`Found ${data.features?.length || 0} attractions`);
       
-      if (!data.features || data.features.length === 0) {
-        return [];
-      }
-      
-      const attractions: TouristSpot[] = data.features.map((feature: any) => {
+      const features = data.features || [];
+
+      const attractions: TouristSpot[] = features.map((feature: any) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
         
@@ -49,7 +58,13 @@ export class TouristSpotService {
         };
       }).filter(Boolean); // Remove null entries
       
-      return attractions;
+      if (this.cache.size >= this.MAX_CACHE_SIZE) {
+        const firstKey = this.cache.keys().next().value;
+        if (firstKey) this.cache.delete(firstKey);
+      }
+      this.cache.set(cacheKey, attractions as TouristSpot[]);
+
+      return [...(attractions as TouristSpot[])];
     } catch (error) {
       console.error('Error fetching tourist attractions:', error);
       return [];
@@ -143,7 +158,18 @@ export class TouristSpotService {
 
 // Geoapify API service for hotels
 export class HotelService {
+  private static cache = new Map<string, Hotel[]>();
+  private static readonly MAX_CACHE_SIZE = 50;
+
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
+    const cacheKey = `${lat},${lon},${radius}`;
+    if (this.cache.has(cacheKey)) {
+      const cached = this.cache.get(cacheKey) || [];
+      this.cache.delete(cacheKey);
+      this.cache.set(cacheKey, cached);
+      return [...cached];
+    }
+
     try {
       const response = await fetch(
         `https://api.geoapify.com/v2/places?categories=accommodation.hotel&filter=circle:${lon},${lat},${radius}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
@@ -155,11 +181,9 @@ export class HotelService {
       
       const data = await response.json();
       
-      if (!data.features || data.features.length === 0) {
-        return [];
-      }
-      
-      const hotels: Hotel[] = data.features.map((feature: any) => {
+      const features = data.features || [];
+
+      const hotels: Hotel[] = features.map((feature: any) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
         
@@ -176,7 +200,13 @@ export class HotelService {
         };
       });
       
-      return hotels;
+      if (this.cache.size >= this.MAX_CACHE_SIZE) {
+        const firstKey = this.cache.keys().next().value;
+        if (firstKey) this.cache.delete(firstKey);
+      }
+      this.cache.set(cacheKey, hotels);
+
+      return [...hotels];
     } catch (error) {
       console.error('Error fetching hotels:', error);
       return [];
