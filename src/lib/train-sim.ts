@@ -49,16 +49,39 @@ export type SimSearchResult = {
 
 // Build stops per train number
 const stopsByTrain: Map<string, SimStop[]> = new Map();
+// Inverted index: Station ID -> Set of Train Numbers
+const trainsByStation: Map<string, Set<string>> = new Map();
+
 (schedules as SimStop[]).forEach((row) => {
   const arr = stopsByTrain.get(row.train_no) || [];
   arr.push(row);
   stopsByTrain.set(row.train_no, arr);
+
+  if (row.station_id) {
+    const stationId = row.station_id.toUpperCase();
+    const stationTrains = trainsByStation.get(stationId) || new Set();
+    stationTrains.add(row.train_no);
+    trainsByStation.set(stationId, stationTrains);
+  }
 });
+
 // Sort each train's stops by (day_offset, seq)
 stopsByTrain.forEach((arr, key) => {
   arr.sort((a, b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
   stopsByTrain.set(key, arr);
 });
+
+// Map for fast train lookup
+const trainsMap = new Map<string, SimTrain>();
+(trains as SimTrain[]).forEach((t) => trainsMap.set(t.train_no, t));
+
+export function getAllTrains(): SimTrain[] {
+  return trains as SimTrain[];
+}
+
+export function getTrainSchedule(trainNo: string): SimStop[] {
+  return stopsByTrain.get(trainNo) || [];
+}
 
 // Unique station codes present in schedules
 let _allStationsCache: string[] | null = null;
@@ -140,9 +163,21 @@ export function findTrains(originInput: string, destinationInput: string, date: 
   const destination = (destinationInput || "").trim().toUpperCase();
   if (!origin || !destination) return [];
 
+  const originTrains = trainsByStation.get(origin);
+  const destTrains = trainsByStation.get(destination);
+
+  if (!originTrains || !destTrains) return [];
+
   const results: SimSearchResult[] = [];
-  (trains as SimTrain[]).forEach((t) => {
-    const stops = stopsByTrain.get(t.train_no);
+
+  // Intersect trains at origin and destination
+  originTrains.forEach((trainNo) => {
+    if (!destTrains.has(trainNo)) return;
+
+    const t = trainsMap.get(trainNo);
+    if (!t) return;
+
+    const stops = stopsByTrain.get(trainNo);
     if (!stops || stops.length < 2) return;
 
     // find first occurrence of origin, then a later occurrence of destination
