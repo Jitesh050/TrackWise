@@ -80,11 +80,13 @@ const BookTicket = () => {
     
     setGeneratedTicket(ticketData);
     try {
-      await ticketsApi.add(ticketData as any);
+      await ticketsApi.add(ticketData as TicketRecord);
       // Refresh any tickets-related queries so dashboards/lists update immediately
       await queryClient.invalidateQueries({ queryKey: ["tickets"] });
       await queryClient.invalidateQueries({ queryKey: ["tickets", "dashboard"] });
-    } catch {}
+    } catch (error) {
+      console.error("Failed to book ticket:", error);
+    }
     setBookingComplete(true);
     setStep(5);
   };
