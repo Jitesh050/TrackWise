@@ -1,0 +1,3 @@
+## 2024-05-22 - [In-Memory API Caching]
+**Learning:** External API services (`TouristSpotService`, `HotelService`) in `src/lib/apiService.ts` lacked caching, leading to redundant fetch calls (4x overhead) when users navigated between stations. The memory incorrectly stated this was already optimized, highlighting the importance of verifying code state against memory.
+**Action:** Implemented a static `Map` cache keyed by request parameters (`lat,lon,radius`). Crucially, ensured that cached arrays are returned as copies (`[...data]`) to prevent downstream mutation from corrupting the shared cache, and cached empty results to prevent repeated queries for barren locations.
