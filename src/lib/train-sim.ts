@@ -60,6 +60,19 @@ stopsByTrain.forEach((arr, key) => {
   stopsByTrain.set(key, arr);
 });
 
+// Build inverted index: station_id -> list of SimTrains stopping there
+const trainsByStation: Map<string, SimTrain[]> = new Map();
+(trains as SimTrain[]).forEach((t) => {
+  const stops = stopsByTrain.get(t.train_no);
+  if (!stops) return;
+  stops.forEach((s) => {
+    const stId = s.station_id; // already upper case in JSON usually, but safe to use as key
+    const arr = trainsByStation.get(stId) || [];
+    arr.push(t);
+    trainsByStation.set(stId, arr);
+  });
+});
+
 // Unique station codes present in schedules
 let _allStationsCache: string[] | null = null;
 export function getAllStations(): string[] {
@@ -141,7 +154,9 @@ export function findTrains(originInput: string, destinationInput: string, date: 
   if (!origin || !destination) return [];
 
   const results: SimSearchResult[] = [];
-  (trains as SimTrain[]).forEach((t) => {
+  const candidates = trainsByStation.get(origin) || [];
+
+  candidates.forEach((t) => {
     const stops = stopsByTrain.get(t.train_no);
     if (!stops || stops.length < 2) return;
 
