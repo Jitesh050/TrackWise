@@ -47,17 +47,34 @@ export type SimSearchResult = {
   to: string;
 };
 
-// Build stops per train number
+// Build stops per train number and indexes
 const stopsByTrain: Map<string, SimStop[]> = new Map();
+const trainsByStation: Map<string, Set<string>> = new Map();
+
 (schedules as SimStop[]).forEach((row) => {
+  // Build stopsByTrain
   const arr = stopsByTrain.get(row.train_no) || [];
   arr.push(row);
   stopsByTrain.set(row.train_no, arr);
+
+  // Build trainsByStation
+  if (row.station_id) {
+    const stationId = row.station_id.toUpperCase();
+    const set = trainsByStation.get(stationId) || new Set();
+    set.add(row.train_no);
+    trainsByStation.set(stationId, set);
+  }
 });
 // Sort each train's stops by (day_offset, seq)
 stopsByTrain.forEach((arr, key) => {
   arr.sort((a, b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
   stopsByTrain.set(key, arr);
+});
+
+// Map for fast SimTrain lookup
+const trainsMap: Map<string, SimTrain> = new Map();
+(trains as SimTrain[]).forEach((t) => {
+  trainsMap.set(t.train_no, t);
 });
 
 // Unique station codes present in schedules
@@ -101,9 +118,12 @@ const STATIONS_NAME_MAP: Record<string, string> = {
   CDG: 'Chandigarh'
 };
 
+let _allStationsWithNamesCache: { code: string; name: string }[] | null = null;
 export function getAllStationsWithNames(): { code: string; name: string }[] {
+  if (_allStationsWithNamesCache) return _allStationsWithNamesCache;
   const codes = getAllStations();
-  return codes.map((c) => ({ code: c, name: STATIONS_NAME_MAP[c] || c }));
+  _allStationsWithNamesCache = codes.map((c) => ({ code: c, name: STATIONS_NAME_MAP[c] || c }));
+  return _allStationsWithNamesCache;
 }
 
 function timeToMinutes(t: string): number {
@@ -140,16 +160,38 @@ export function findTrains(originInput: string, destinationInput: string, date: 
   const destination = (destinationInput || "").trim().toUpperCase();
   if (!origin || !destination) return [];
 
+  const fromTrains = trainsByStation.get(origin);
+  const toTrains = trainsByStation.get(destination);
+
+  if (!fromTrains || !toTrains) return [];
+
+  // Find intersection of trains passing through both stations
+  // Optimization: Iterate over the smaller set
+  const [smaller, larger] = fromTrains.size < toTrains.size ? [fromTrains, toTrains] : [toTrains, fromTrains];
+  const candidates: string[] = [];
+
+  for (const trainNo of smaller) {
+    if (larger.has(trainNo)) {
+      candidates.push(trainNo);
+    }
+  }
+
   const results: SimSearchResult[] = [];
-  (trains as SimTrain[]).forEach((t) => {
-    const stops = stopsByTrain.get(t.train_no);
-    if (!stops || stops.length < 2) return;
+
+  for (const trainNo of candidates) {
+    const t = trainsMap.get(trainNo);
+    if (!t) continue;
+
+    const stops = stopsByTrain.get(trainNo);
+    if (!stops || stops.length < 2) continue;
 
     // find first occurrence of origin, then a later occurrence of destination
+    // Note: stops are sorted by sequence, but findIndex is still linear.
+    // Since candidates are filtered, this inner loop runs fewer times.
     const fromIdx = stops.findIndex((s) => s.station_id === origin);
-    if (fromIdx === -1) return;
+    if (fromIdx === -1) continue;
     const toIdx = stops.findIndex((s, i) => i > fromIdx && s.station_id === destination);
-    if (toIdx === -1) return;
+    if (toIdx === -1) continue;
 
     const dep = stops[fromIdx].departure || stops[fromIdx].arrival || "";
     const arr = stops[toIdx].arrival || stops[toIdx].departure || "";
@@ -175,7 +217,7 @@ export function findTrains(originInput: string, destinationInput: string, date: 
       from: origin,
       to: destination,
     });
-  });
+  }
 
   // Sort by departure time
   results.sort((a, b) => timeToMinutes(a.departureTime) - timeToMinutes(b.departureTime));
