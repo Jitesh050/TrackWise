@@ -1,35 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import trainsData from '../../simulation/trains_100.json'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import schedulesData from '../../simulation/schedules_100.json'
-import { getAllStationsWithNames } from '@/lib/train-sim'
+import { getAllStationsWithNames, getAllTrains, getTrainSchedule } from '@/lib/train-sim'
 
 // --- Types ---
-export interface TrainRecord {
-  train_no: string
-  train_name: string
-  from_station: string
-  to_station: string
-  category: string
-}
-
-export interface ScheduleRecord {
-  train_no: string
-  station_id: string
-  arrival: string // "" when not applicable
-  departure: string // "" when not applicable
-  halt_min: number
-  seq: number
-}
-
-export interface StationRecord {
-  id: string
-  name: string
-}
-
 export interface TrainStatusItem {
   id: string
   name: string
@@ -57,10 +29,6 @@ export interface UseTrainStatusReturn {
   resetSimulation: () => void
 }
 
-// --- Load simulation data ---
-const TRAINS_DATA: TrainRecord[] = (trainsData as any) as TrainRecord[]
-const SCHEDULES_DATA: ScheduleRecord[] = (schedulesData as any) as ScheduleRecord[]
-
 // Build station name map from simulation helper
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
@@ -81,11 +49,14 @@ const getSimBaseNow = (): Date => {
 const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
   const data: TrainStatusItem[] = []
   const currentTime = now.getTime()
+  const allTrains = getAllTrains()
 
-  TRAINS_DATA.forEach((train) => {
+  allTrains.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
-    if (trainSchedules.length < 2) return
+    const trainSchedules = getTrainSchedule(trainNo)
+
+    // Safety check: ensure schedules exist and have at least source/dest
+    if (!trainSchedules || trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
     const destStation = trainSchedules[trainSchedules.length - 1]
@@ -115,7 +86,6 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     if (currentLegIndex === -1) {
       // Before first departure
       status = 'Boarding'
-      const timeUntilDeparture = departureTime - currentTime
       // No randomness; treat pre-departure as Boarding
       nextStation = getStationName(trainSchedules[1].station_id)
     } else if (currentLegIndex < trainSchedules.length - 1) {
