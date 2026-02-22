@@ -7,11 +7,26 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, ArrowRight } from "lucide-react";
 import TrainStatusCard from "@/components/TrainStatusCard";
-import { useTrainStatus } from "@/hooks/useTrainStatus";
+import { useTrainStatus, TrainStatusItem } from "@/hooks/useTrainStatus";
+
+interface MappedTrainStatus {
+  id: string;
+  trainNumber: string;
+  trainName: string;
+  origin: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
+  status: "ontime" | "delayed" | "cancelled" | "boarding";
+  delay?: number;
+  platform?: string;
+  progress: number;
+  nextStation: string;
+}
 
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
+  const [filteredTrains, setFilteredTrains] = useState<MappedTrainStatus[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
   const [params] = useSearchParams();
@@ -32,7 +47,7 @@ const TrainStatus = () => {
   
   // Filter trains from hook based on search and active tab
   useEffect(() => {
-    const list = (trains || []).map((t: any) => ({
+    const list: MappedTrainStatus[] = (trains || []).map((t: TrainStatusItem) => ({
       id: String(t.id),
       trainNumber: String(t.id),
       trainName: String(t.name || ""),
