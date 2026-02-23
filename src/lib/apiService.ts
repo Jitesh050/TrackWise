@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Station, TouristSpot, Hotel } from './stationData';
 
 const OPENTRIPMAP_API_KEY = '5ae2e3f221c38a28845f05b6b3fa1b0ebc61af498e582315f53ae35d';

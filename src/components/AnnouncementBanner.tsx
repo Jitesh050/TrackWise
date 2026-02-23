@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { X, AlertTriangle, Clock } from "lucide-react";
@@ -6,6 +7,7 @@ import { useTrainStatus } from "@/hooks/useTrainStatus";
 const AnnouncementBanner = () => {
   const { trains } = useTrainStatus();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const delayed = (trains || []).filter((t: any) => String(t.status).toLowerCase().includes('delay'));
   if (delayed.length === 0) return null;
 

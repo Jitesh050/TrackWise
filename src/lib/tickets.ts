@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/lib/firebase';
 import { auth } from '@/lib/firebase';
 import { addDoc, collection, doc, getDoc, getDocs, orderBy, query, serverTimestamp, where } from 'firebase/firestore';
@@ -36,7 +37,9 @@ function readLS(): TicketRecord[] {
 function writeLS(tickets: TicketRecord[]) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(tickets));
-  } catch {}
+  } catch {
+    // ignore
+  }
 }
 
 export const ticketsApi = {

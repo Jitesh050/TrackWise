@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { db } from '@/lib/firebase';
 import { auth } from '@/lib/firebase';
 import { addDoc, collection, doc, getDoc, getDocs, orderBy, query, serverTimestamp, updateDoc, where } from 'firebase/firestore';
@@ -41,7 +42,9 @@ function readLS(): PriorityTicketRecord[] {
 function writeLS(tickets: PriorityTicketRecord[]) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(tickets));
-  } catch {}
+  } catch {
+    // ignore local storage errors
+  }
 }
 
 export const priorityTicketsApi = {

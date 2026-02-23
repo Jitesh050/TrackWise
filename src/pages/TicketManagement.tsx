@@ -44,10 +44,11 @@ const TicketManagement = () => {
 
   // Memoize filtered tickets to prevent re-filtering on every render
   const filteredTickets = useMemo(() => {
+    const lowerSearchTerm = searchTerm.toLowerCase();
     return tickets.filter(ticket => {
-      const matchesSearch = ticket.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           ticket.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           ticket.trainNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesSearch = ticket.passengerName.toLowerCase().includes(lowerSearchTerm) ||
+                           ticket.pnr.toLowerCase().includes(lowerSearchTerm) ||
+                           ticket.trainNumber.toLowerCase().includes(lowerSearchTerm);
       const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
       return matchesSearch && matchesFilter;
     });
