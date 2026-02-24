@@ -1,29 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import trainsData from '../../simulation/trains_100.json'
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import schedulesData from '../../simulation/schedules_100.json'
-import { getAllStationsWithNames } from '@/lib/train-sim'
+import { getAllStationsWithNames, getAllTrains, getTrainSchedule, SimTrain, SimStop } from '@/lib/train-sim'
 
 // --- Types ---
-export interface TrainRecord {
-  train_no: string
-  train_name: string
-  from_station: string
-  to_station: string
-  category: string
-}
-
-export interface ScheduleRecord {
-  train_no: string
-  station_id: string
-  arrival: string // "" when not applicable
-  departure: string // "" when not applicable
-  halt_min: number
-  seq: number
-}
+export interface TrainRecord extends SimTrain {}
+export interface ScheduleRecord extends SimStop {}
 
 export interface StationRecord {
   id: string
@@ -57,10 +37,6 @@ export interface UseTrainStatusReturn {
   resetSimulation: () => void
 }
 
-// --- Load simulation data ---
-const TRAINS_DATA: TrainRecord[] = (trainsData as any) as TrainRecord[]
-const SCHEDULES_DATA: ScheduleRecord[] = (schedulesData as any) as ScheduleRecord[]
-
 // Build station name map from simulation helper
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
@@ -81,11 +57,14 @@ const getSimBaseNow = (): Date => {
 const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
   const data: TrainStatusItem[] = []
   const currentTime = now.getTime()
+  const allTrains = getAllTrains()
 
-  TRAINS_DATA.forEach((train) => {
+  allTrains.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
-    if (trainSchedules.length < 2) return
+    // Optimization: Use O(1) Map lookup instead of O(N) array filter
+    const trainSchedules = getTrainSchedule(trainNo)
+
+    if (!trainSchedules || trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
     const destStation = trainSchedules[trainSchedules.length - 1]
