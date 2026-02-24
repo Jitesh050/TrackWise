@@ -7,11 +7,23 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Filter, ArrowRight } from "lucide-react";
 import TrainStatusCard from "@/components/TrainStatusCard";
-import { useTrainStatus } from "@/hooks/useTrainStatus";
+import { useTrainStatus, TrainStatusItem } from "@/hooks/useTrainStatus";
+
+// Extended type for UI display which maps internal model to component props
+interface DisplayTrain extends Omit<TrainStatusItem, 'status' | 'platform'> {
+  trainNumber: string;
+  trainName: string;
+  origin: string;
+  destination: string;
+  departureTime: string;
+  arrivalTime: string;
+  status: "ontime" | "delayed" | "cancelled" | "boarding";
+  platform?: string;
+}
 
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
+  const [filteredTrains, setFilteredTrains] = useState<DisplayTrain[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
   const [params] = useSearchParams();
@@ -32,16 +44,17 @@ const TrainStatus = () => {
   
   // Filter trains from hook based on search and active tab
   useEffect(() => {
-    const list = (trains || []).map((t: any) => ({
-      id: String(t.id),
-      trainNumber: String(t.id),
-      trainName: String(t.name || ""),
-      origin: String(t.from || ""),
-      destination: String(t.to || ""),
-      departureTime: String(t.departure || "-"),
-      arrivalTime: String(t.arrival || "-"),
+    const list: DisplayTrain[] = (trains || []).map((t) => ({
+      ...t,
+      id: t.id,
+      trainNumber: t.id,
+      trainName: t.name || "",
+      origin: t.from || "",
+      destination: t.to || "",
+      departureTime: t.departure || "-",
+      arrivalTime: t.arrival || "-",
       status: mapStatusToCard(t.status),
-      delay: typeof t.delay === 'number' ? t.delay : undefined,
+      delay: t.delay,
       platform: t.platform ? String(t.platform) : undefined,
       progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
       nextStation: t.nextStation,
