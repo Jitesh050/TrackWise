@@ -47,18 +47,32 @@ export type SimSearchResult = {
   to: string;
 };
 
-// Build stops per train number
+// Build stops per train number and trains per station
 const stopsByTrain: Map<string, SimStop[]> = new Map();
+const trainsByStation: Map<string, Set<string>> = new Map();
+
 (schedules as SimStop[]).forEach((row) => {
   const arr = stopsByTrain.get(row.train_no) || [];
   arr.push(row);
   stopsByTrain.set(row.train_no, arr);
+
+  // Inverted index build
+  const stationId = row.station_id.toUpperCase();
+  if (!trainsByStation.has(stationId)) {
+    trainsByStation.set(stationId, new Set());
+  }
+  trainsByStation.get(stationId)!.add(row.train_no);
 });
+
 // Sort each train's stops by (day_offset, seq)
 stopsByTrain.forEach((arr, key) => {
   arr.sort((a, b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
   stopsByTrain.set(key, arr);
 });
+
+// Map for fast SimTrain lookup
+const trainsMap: Map<string, SimTrain> = new Map();
+(trains as SimTrain[]).forEach((t) => trainsMap.set(t.train_no, t));
 
 // Unique station codes present in schedules
 let _allStationsCache: string[] | null = null;
@@ -140,10 +154,24 @@ export function findTrains(originInput: string, destinationInput: string, date: 
   const destination = (destinationInput || "").trim().toUpperCase();
   if (!origin || !destination) return [];
 
+  const originTrains = trainsByStation.get(origin);
+  const destTrains = trainsByStation.get(destination);
+
+  if (!originTrains || !destTrains) return [];
+
   const results: SimSearchResult[] = [];
-  (trains as SimTrain[]).forEach((t) => {
-    const stops = stopsByTrain.get(t.train_no);
-    if (!stops || stops.length < 2) return;
+
+  // Iterate over the smaller set for better performance
+  const [iterSet, checkSet] = originTrains.size < destTrains.size
+    ? [originTrains, destTrains]
+    : [destTrains, originTrains];
+
+  iterSet.forEach((trainNo) => {
+    if (!checkSet.has(trainNo)) return;
+
+    const t = trainsMap.get(trainNo);
+    const stops = stopsByTrain.get(trainNo);
+    if (!t || !stops || stops.length < 2) return;
 
     // find first occurrence of origin, then a later occurrence of destination
     const fromIdx = stops.findIndex((s) => s.station_id === origin);
