@@ -5,7 +5,16 @@ const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
+  private static cache = new Map<string, TouristSpot[]>();
+  private static readonly MAX_CACHE_SIZE = 50;
+
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
+    const cacheKey = `${lat.toFixed(4)},${lon.toFixed(4)},${radius}`;
+
+    if (this.cache.has(cacheKey)) {
+      return [...(this.cache.get(cacheKey) || [])];
+    }
+
     try {
       console.log(`Searching for attractions near lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
       
@@ -22,9 +31,11 @@ export class TouristSpotService {
       console.log(`Found ${data.features?.length || 0} attractions`);
       
       if (!data.features || data.features.length === 0) {
+        this.cacheResponse(cacheKey, []);
         return [];
       }
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const attractions: TouristSpot[] = data.features.map((feature: any) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
@@ -47,13 +58,22 @@ export class TouristSpotService {
           googleMapsLink: `https://www.google.com/maps/dir/${lat},${lon}/${feature.geometry.coordinates[1]},${feature.geometry.coordinates[0]}`,
           imageUrl: properties.image_url || undefined
         };
-      }).filter(Boolean); // Remove null entries
+      }).filter((item: TouristSpot | null): item is TouristSpot => item !== null); // Remove null entries
       
+      this.cacheResponse(cacheKey, attractions);
       return attractions;
     } catch (error) {
       console.error('Error fetching tourist attractions:', error);
       return [];
     }
+  }
+
+  private static cacheResponse(key: string, data: TouristSpot[]) {
+    if (this.cache.size >= this.MAX_CACHE_SIZE) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey) this.cache.delete(firstKey);
+    }
+    this.cache.set(key, data);
   }
   
   private static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
@@ -67,6 +87,7 @@ export class TouristSpotService {
     return R * c;
   }
   
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static getAttractionType(properties: any): string {
     const name = properties.name?.toLowerCase() || '';
     const categories = properties.categories || [];
@@ -143,7 +164,16 @@ export class TouristSpotService {
 
 // Geoapify API service for hotels
 export class HotelService {
+  private static cache = new Map<string, Hotel[]>();
+  private static readonly MAX_CACHE_SIZE = 50;
+
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
+    const cacheKey = `${lat.toFixed(4)},${lon.toFixed(4)},${radius}`;
+
+    if (this.cache.has(cacheKey)) {
+      return [...(this.cache.get(cacheKey) || [])];
+    }
+
     try {
       const response = await fetch(
         `https://api.geoapify.com/v2/places?categories=accommodation.hotel&filter=circle:${lon},${lat},${radius}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
@@ -156,9 +186,11 @@ export class HotelService {
       const data = await response.json();
       
       if (!data.features || data.features.length === 0) {
+        this.cacheResponse(cacheKey, []);
         return [];
       }
       
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const hotels: Hotel[] = data.features.map((feature: any) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
@@ -169,18 +201,27 @@ export class HotelService {
           price: this.getRandomPrice(),
           distance: `${distance.toFixed(1)} km from station`,
           amenities: this.getRandomAmenities(),
-          phone: properties.phone || '+91-XXXX-XXXXXX',
+          phone: properties.contact?.phone || properties.phone || 'Phone number not available',
           website: properties.website || `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(properties.name || 'hotel')}`,
           address: properties.formatted || 'Address not available',
           imageUrl: properties.image_url || undefined
         };
       });
       
+      this.cacheResponse(cacheKey, hotels);
       return hotels;
     } catch (error) {
       console.error('Error fetching hotels:', error);
       return [];
     }
+  }
+
+  private static cacheResponse(key: string, data: Hotel[]) {
+    if (this.cache.size >= this.MAX_CACHE_SIZE) {
+      const firstKey = this.cache.keys().next().value;
+      if (firstKey) this.cache.delete(firstKey);
+    }
+    this.cache.set(key, data);
   }
   
   private static calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
