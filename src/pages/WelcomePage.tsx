@@ -21,7 +21,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 const WelcomePage = () => {
@@ -35,7 +35,7 @@ const WelcomePage = () => {
     try {
       await signIn(email, password);
       // Decide route by role stored in Firestore
-      const uid = (await import("firebase/auth")).getAuth().currentUser?.uid;
+      const uid = auth.currentUser?.uid;
       if (uid) {
         const adminSnap = await getDoc(doc(db, "admins", uid));
         if (adminSnap.exists()) {
@@ -45,7 +45,7 @@ const WelcomePage = () => {
       }
       navigate("/passenger");
     } catch (error) {
-      // eslint-disable-next-line no-console
+
       console.error("Login error:", error);
     }
   };
