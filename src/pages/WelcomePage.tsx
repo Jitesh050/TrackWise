@@ -21,7 +21,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { db } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
 const WelcomePage = () => {

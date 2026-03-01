@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,34 +42,13 @@ const TicketManagement = () => {
     setLoading(false);
   };
 
-  // ⚡ Bolt: Optimized filtering by memoizing the result to prevent recalculation on every render
-  // and by converting the search term to lowercase once outside the filter loop (O(1) string op instead of O(N)).
-  const filteredTickets = useMemo(() => {
-    const lowerSearchTerm = searchTerm.toLowerCase();
-    return tickets.filter(ticket => {
-      const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
-      if (!matchesFilter) return false;
-
-      if (lowerSearchTerm === "") return true;
-
-      return ticket.passengerName.toLowerCase().includes(lowerSearchTerm) ||
-             ticket.pnr.toLowerCase().includes(lowerSearchTerm) ||
-             ticket.trainNumber.toLowerCase().includes(lowerSearchTerm);
-    });
-  }, [tickets, searchTerm, filterStatus]);
-
-  // ⚡ Bolt: Optimized ticket statistics calculation by replacing four separate O(N) filter loops
-  // with a single-pass O(N) reduce function. Memoized to prevent redundant calculations on re-renders.
-  // Benchmark shows a ~74% speedup for large datasets.
-  const ticketStats = useMemo(() => {
-    return tickets.reduce((acc, t) => {
-      if (t.status === 'Confirmed') acc.confirmed++;
-      else if (t.status === 'Waiting') acc.waiting++;
-      else if (t.status === 'Cancelled') acc.cancelled++;
-      acc.total++;
-      return acc;
-    }, { confirmed: 0, waiting: 0, cancelled: 0, total: 0 });
-  }, [tickets]);
+  const filteredTickets = tickets.filter(ticket => {
+    const matchesSearch = ticket.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ticket.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ticket.trainNumber.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
+    return matchesSearch && matchesFilter;
+  });
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -117,7 +96,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Confirmed</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {ticketStats.confirmed}
+                  {tickets.filter(t => t.status === "Confirmed").length}
                 </p>
               </div>
             </div>
@@ -131,7 +110,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Waiting</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {ticketStats.waiting}
+                  {tickets.filter(t => t.status === "Waiting").length}
                 </p>
               </div>
             </div>
@@ -145,7 +124,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Cancelled</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {ticketStats.cancelled}
+                  {tickets.filter(t => t.status === "Cancelled").length}
                 </p>
               </div>
             </div>
@@ -158,7 +137,7 @@ const TicketManagement = () => {
               <Ticket className="h-4 w-4 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-blue-600">{ticketStats.total}</p>
+                <p className="text-2xl font-bold text-blue-600">{tickets.length}</p>
               </div>
             </div>
           </CardContent>
