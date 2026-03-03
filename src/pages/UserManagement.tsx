@@ -23,7 +23,7 @@ const UserManagement = () => {
   const [filterRole, setFilterRole] = useState("all");
 
   // Mock data - in real app, this would come from API
-  const users = [
+  const users = useMemo(() => [
     {
       id: "1",
       name: "John Doe",
@@ -57,7 +57,7 @@ const UserManagement = () => {
       lastLogin: "2024-01-15 09:20",
       totalBookings: 5
     }
-  ];
+  ], []);
 
   const filteredUsers = useMemo(() => {
     const lowerSearch = searchTerm.toLowerCase();
