@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +23,7 @@ const UserManagement = () => {
   const [filterRole, setFilterRole] = useState("all");
 
   // Mock data - in real app, this would come from API
-  const users = [
+  const users = useMemo(() => [
     {
       id: "1",
       name: "John Doe",
@@ -57,15 +57,32 @@ const UserManagement = () => {
       lastLogin: "2024-01-15 09:20",
       totalBookings: 5
     }
-  ];
+  ], []);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone.includes(searchTerm);
-    const matchesFilter = filterRole === "all" || user.role === filterRole;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredUsers = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return users.filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(lowerSearch) ||
+                           user.email.toLowerCase().includes(lowerSearch) ||
+                           user.phone.includes(searchTerm);
+      const matchesFilter = filterRole === "all" || user.role === filterRole;
+      return matchesSearch && matchesFilter;
+    });
+  }, [users, searchTerm, filterRole]);
+
+  // ⚡ Bolt: Optimize stats calculation
+  // Replace 3 separate O(N) filter passes with a single O(N) reduce operation inside useMemo
+  const userStats = useMemo(() => {
+    return users.reduce(
+      (acc, u) => {
+        if (u.role === "admin") acc.admins++;
+        if (u.status === "active") acc.active++;
+        if (u.role === "user") acc.regularUsers++;
+        return acc;
+      },
+      { admins: 0, active: 0, regularUsers: 0 }
+    );
+  }, [users]);
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -126,7 +143,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Admins</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {users.filter(u => u.role === "admin").length}
+                  {userStats.admins}
                 </p>
               </div>
             </div>
@@ -140,7 +157,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Users</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {users.filter(u => u.status === "active").length}
+                  {userStats.active}
                 </p>
               </div>
             </div>
@@ -154,7 +171,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Regular Users</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {users.filter(u => u.role === "user").length}
+                  {userStats.regularUsers}
                 </p>
               </div>
             </div>
