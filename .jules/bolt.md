@@ -1,0 +1,3 @@
+## 2024-11-20 - [Performance] Consolidate multiple filter passes into single reduce
+**Learning:** Found multiple instances where React components run separate `O(N)` `Array.prototype.filter(...).length` checks on the same large array just to calculate summary statistics (e.g., `activeUsers`, `adminUsers`, `regularUsers`).
+**Action:** When calculating multiple derived statistical counts from a single array in React components, replace separate `.filter()` calls with a single `useMemo` block utilizing `.reduce()`. This reduces iterations from O(K*N) to O(N) where K is the number of distinct stats needed. Be sure to also hoist string formatting functions like `.toLowerCase()` outside the loop body whenever possible.
