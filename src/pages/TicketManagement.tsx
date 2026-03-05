@@ -47,9 +47,9 @@ const TicketManagement = () => {
   const ticketStats = useMemo(() => {
     return tickets.reduce(
       (acc, ticket) => {
-        if (ticket.status === "Confirmed") acc.confirmed++;
-        else if (ticket.status === "Waiting") acc.waiting++;
-        else if (ticket.status === "Cancelled") acc.cancelled++;
+        if (ticket.status === "Confirmed") acc.confirmed += 1;
+        else if (ticket.status === "Waiting") acc.waiting += 1;
+        else if (ticket.status === "Cancelled") acc.cancelled += 1;
         return acc;
       },
       { confirmed: 0, waiting: 0, cancelled: 0 }
