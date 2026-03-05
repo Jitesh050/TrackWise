@@ -1,0 +1,4 @@
+## 2024-05-19 - Optimization Strategy
+
+**Learning:** Component `UserManagement` performs O(N) array filtering multiple times to calculate aggregate statistics (Total Users, Admins, Active Users, Regular Users) and applies another O(N) filtering to handle search logic directly inside the component body, meaning these calculations happen *on every single render*.
+**Action:** Use `useMemo` to cache derived state and combine the aggregate statistic calculations into a single pass (`reduce`). Move `searchTerm.toLowerCase()` outside of the filter loop to prevent repetitive string operations. Apply similar optimizations to `TrainManagement.tsx` and `TicketManagement.tsx` where applicable, though it seems `TrainManagement` and `UserManagement` have previously been modified (memory mentions "performance was optimized by consolidating multiple O(N)... passes"). Let me check memory and file contents to confirm.
