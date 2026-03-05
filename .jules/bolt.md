@@ -1,0 +1,4 @@
+## 2024-05-19 - Derived State Filtering Bottleneck
+
+**Learning:** Un-memoized derived state calculations (e.g., executing `tickets.filter(...)` inside the component body) cause O(N) operations to block the main thread on every re-render (e.g., every keystroke in the search bar). This is a critical performance anti-pattern observed across multiple Management pages (`UserManagement`, `TrainManagement`, `TicketManagement`) when handling potentially large datasets.
+**Action:** Always wrap derived filtering logic in `useMemo` with appropriate dependencies (`[data, filterTerm]`). Additionally, consolidate multiple O(N) `.filter().length` statistical calculations into a single O(N) `.reduce()` pass and hoist `.toLowerCase()` conversions outside iterative loops to prevent repetitive string allocations.
