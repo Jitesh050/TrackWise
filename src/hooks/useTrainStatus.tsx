@@ -78,13 +78,22 @@ const getSimBaseNow = (): Date => {
   return d
 }
 
+// ⚡ Bolt: Pre-compute schedule map for O(1) lookups
+const SCHEDULES_BY_TRAIN = new Map<string, ScheduleRecord[]>();
+SCHEDULES_DATA.forEach(s => {
+  const arr = SCHEDULES_BY_TRAIN.get(s.train_no);
+  if (arr) arr.push(s);
+  else SCHEDULES_BY_TRAIN.set(s.train_no, [s]);
+});
+
 const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
   const data: TrainStatusItem[] = []
   const currentTime = now.getTime()
 
   TRAINS_DATA.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
+    // ⚡ Bolt: Replaced O(N) array filtering with O(1) map lookup
+    const trainSchedules = SCHEDULES_BY_TRAIN.get(trainNo) || []
     if (trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
@@ -96,7 +105,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     let delay = 0
     let nextStation = ''
     let currentDeparture = sourceStation.departure
-    let currentArrival = destStation.arrival
+    const currentArrival = destStation.arrival
     const platform = (parseInt(trainNo.slice(-1)) % 10) + 1
 
     let currentLegIndex = -1
