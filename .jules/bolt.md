@@ -1,0 +1,3 @@
+## 2024-03-07 - [Optimize TrainStatus list filtering]
+**Learning:** Chained `.map().filter().filter()` operations inside React `useEffect` hooks cause significant garbage collection overhead and redundant iterations, especially when working with larger datasets triggered by keystrokes. Helper functions inside components are also recreated on every render.
+**Action:** Extract stateless helper functions outside the component. Refactor chained array operations into a single-pass `.reduce()` block with early returns to avoid allocating objects for items that will eventually be filtered out. Use `// eslint-disable-next-line @typescript-eslint/no-explicit-any` on pre-existing `any` typings if type definitions are too complex for a quick fix.
