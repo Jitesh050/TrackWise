@@ -10,6 +10,12 @@ import './App.css';
 
 // Simple auth wrapper component
 const AuthWrapper: React.FC<{children: React.ReactNode}> = ({ children }) => {
+  const { isLoading } = useAuth();
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center min-h-screen bg-gray-50 text-gray-900">Loading...</div>;
+  }
+
   return <>{children}</>;
 };
 
