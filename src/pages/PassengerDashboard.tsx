@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { FeatureSection } from "@/components/ui/feature-section";
@@ -36,32 +36,50 @@ const PassengerDashboard = () => {
     staleTime: 15_000,
   });
 
-  const activeBookings = tickets.filter(t => t.status === "Confirmed").length;
+  const { activeBookings, nextJourney, milesTraveled } = useMemo(() => {
+    let confirmedCount = 0;
+    let kmTotal = 0;
+    const byCode = new Map(stations.map((s) => [s.id.toUpperCase(), s]));
+    let nearestTime = Infinity;
+    const now = Date.now();
+
+    (tickets || []).forEach((t) => {
+      const isConfirmed = t.status === "Confirmed";
+      if (isConfirmed) confirmedCount += 1;
+
+      const timeStr = t.date + (t.departureTime ? " " + t.departureTime : "");
+      const tTime = Date.parse(timeStr) || Date.parse(t.date);
+
+      if (!isNaN(tTime) && tTime >= now) {
+        if (tTime < nearestTime) {
+          nearestTime = tTime;
+        }
+      }
+
+      if (isConfirmed) {
+        const from = byCode.get(String(t.from || "").toUpperCase());
+        const to = byCode.get(String(t.to || "").toUpperCase());
+        if (from && to) {
+          kmTotal += calculateDistance(from.lat, from.lon, to.lat, to.lon);
+        }
+      }
+    });
+
+    const nJourney =
+      nearestTime !== Infinity
+        ? new Date(nearestTime).toLocaleString()
+        : "No upcoming";
+    const mTraveled = Math.round(kmTotal * 0.621371);
+
+    return {
+      activeBookings: confirmedCount,
+      nextJourney: nJourney,
+      milesTraveled: mTraveled,
+    };
+  }, [tickets]);
+
   const hasBookings = (tickets || []).length > 0;
-  const latestPnr = hasBookings ? (tickets[0]?.pnr || "") : "";
-  const nextJourney = (() => {
-    const withDate = tickets
-      .map(t => ({ t, time: Date.parse(t.date + (t.departureTime ? " " + t.departureTime : "")) || Date.parse(t.date) }))
-      .filter(x => !isNaN(x.time) && x.time >= Date.now())
-      .sort((a,b) => a.time - b.time);
-    if (withDate.length === 0) return "No upcoming";
-    const d = new Date(withDate[0].time);
-    return d.toLocaleString();
-  })();
-  const milesTraveled = (() => {
-    // Build quick lookup of station by code
-    const byCode = new Map(stations.map(s => [s.id.toUpperCase(), s]));
-    const kmTotal = (tickets || [])
-      .filter(t => t.status === "Confirmed")
-      .reduce((sum, t) => {
-        const from = byCode.get(String(t.from || '').toUpperCase());
-        const to = byCode.get(String(t.to || '').toUpperCase());
-        if (!from || !to) return sum;
-        const km = calculateDistance(from.lat, from.lon, to.lat, to.lon);
-        return sum + km;
-      }, 0);
-    return Math.round(kmTotal * 0.621371); // convert to miles
-  })();
+  const latestPnr = hasBookings ? tickets[0]?.pnr || "" : "";
 
   const handleFeatureClick = (route: string) => {
     navigate(route);
