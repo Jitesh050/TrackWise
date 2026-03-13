@@ -1,0 +1,3 @@
+## 2024-03-14 - Use useMemo and reduce for array transformations
+**Learning:** Multiple passes over large arrays (like using `.filter().length` repeatedly on the same list, mapping arrays to extract dates and then sorting/filtering) are a common performance bottleneck in React components. In pages like `PassengerDashboard`, operations such as calculating `nextJourney` and `milesTraveled` or derived arrays were being recomputed linearly on every render, which becomes highly inefficient.
+**Action:** Consolidate array scans into a single `.reduce()` or `for` loop wrapped in a `useMemo` hook. This ensures O(N) instead of O(N * Passes), minimizing memory overhead and redundant operations during re-renders. Avoid mutating outside arrays within useMemo to keep them pure.
