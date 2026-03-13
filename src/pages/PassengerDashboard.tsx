@@ -76,7 +76,7 @@ const PassengerDashboard = () => {
       nextJourney: nJourney,
       milesTraveled: mTraveled,
     };
-  }, [tickets, stations]);
+  }, [tickets]);
 
   const hasBookings = (tickets || []).length > 0;
   const latestPnr = hasBookings ? tickets[0]?.pnr || "" : "";
