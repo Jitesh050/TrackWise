@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,12 +8,17 @@ import { stations as stationList } from "@/lib/stationData";
 
 const StationInfo = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const stations = stationList
-    .filter(s =>
-      s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      s.state.toLowerCase().includes(searchQuery.toLowerCase())
+
+  // ⚡ Bolt: Hoisted searchQuery.toLowerCase() and wrapped the filtering in useMemo to prevent O(N) recalculations on every render
+  const stations = useMemo(() => {
+    if (!searchQuery) return stationList;
+    const lowerQuery = searchQuery.toLowerCase();
+    return stationList.filter(s =>
+      s.id.toLowerCase().includes(lowerQuery) ||
+      s.name.toLowerCase().includes(lowerQuery) ||
+      s.state.toLowerCase().includes(lowerQuery)
     );
+  }, [searchQuery]);
 
   return (
     <div className="container mx-auto space-y-8 pb-10 animate-enter">
