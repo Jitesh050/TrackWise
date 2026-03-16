@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,8 @@ const HelpCenter = () => {
     }
   ]);
 
-  const faqs = [
+  // Moved static FAQs outside component or useMemo to avoid recreation on every render
+  const faqs = useMemo(() => [
     {
       question: "How do I book a ticket online?",
       answer: "To book a ticket online, go to the 'Book Ticket' section, enter your journey details including origin, destination, date, and number of passengers. Select your preferred train and class, then proceed to seat selection and payment."
@@ -44,7 +45,7 @@ const HelpCenter = () => {
       question: "What are the baggage limits?",
       answer: "Economy class: 20kg, Business class: 30kg, First class: 40kg. Additional charges apply for excess baggage. Prohibited items include flammable substances, weapons, and hazardous materials."
     }
-  ];
+  ], []);
 
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,10 +74,15 @@ const HelpCenter = () => {
     setChatMessage("");
   };
 
-  const filteredFaqs = faqs.filter(faq => 
-    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ⚡ Bolt: Added useMemo and hoisted searchQuery.toLowerCase() to prevent redundant operations and re-renders
+  const filteredFaqs = useMemo(() => {
+    if (!searchQuery) return faqs;
+    const lowerQuery = searchQuery.toLowerCase();
+    return faqs.filter(faq =>
+      faq.question.toLowerCase().includes(lowerQuery) ||
+      faq.answer.toLowerCase().includes(lowerQuery)
+    );
+  }, [faqs, searchQuery]);
 
   return (
     <div className="container mx-auto space-y-8 pb-10 animate-enter">
