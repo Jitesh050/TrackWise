@@ -1,0 +1,3 @@
+## 2025-03-18 - [Optimize PassengerDashboard Statistics Computations]
+**Learning:** Performance was optimized in PassengerDashboard by memoizing derived ticket statistics and preventing redundant O(N) array filtering and Map recreation on every render. Hoisting static data outside the component is a key pattern.
+**Action:** When extracting derived statistics across multiple variables in a component, combine them into a single `useMemo` block that iterates through the data array exactly once. Extract static data structures (e.g. `stations` maps) out of the component function scope to avoid continuous recreation.
