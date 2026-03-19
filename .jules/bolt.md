@@ -1,0 +1,3 @@
+## 2025-02-13 - Optimize Array Filtering with early Return
+**Learning:** `useMemo` isn't always enough if the dependency array includes high-frequency changes (like a text search query). However, within the filtering loop itself, short-circuit evaluation by checking cheap operations first (like strict equality on `status` vs `toLowerCase().includes()` on a long string) makes a massive difference for large collections.
+**Action:** When filtering collections across multiple criteria (string search + exact status matches), order the conditions from least expensive (strict equality, booleans) to most expensive (string manipulation, Regex). Use `useMemo` to skip work entirely if no dependencies changed, but optimize the inner loop to handle cases where it *does* run.

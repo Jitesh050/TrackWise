@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,15 @@ import { useSearchParams } from "react-router-dom";
 
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 import TrainStatusCard from "@/components/TrainStatusCard";
+
+// Move static helper outside of component to avoid recreation
+const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+  const s = (status || "").toLowerCase();
+  if (s.includes("cancel")) return "cancelled";
+  if (s.includes("board")) return "boarding";
+  if (s.includes("delay")) return "delayed";
+  return "ontime";
+};
 
 const LiveTrainStatus = () => {
   const [searchTrain, setSearchTrain] = useState("");
@@ -22,25 +31,28 @@ const LiveTrainStatus = () => {
     if (q) setSearchTrain(q);
   }, [params]);
 
-  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-    const s = (status || "").toLowerCase();
-    if (s.includes("cancel")) return "cancelled";
-    if (s.includes("board")) return "boarding";
-    if (s.includes("delay")) return "delayed";
-    return "ontime";
-  };
+  // ⚡ Bolt: Optimize expensive array filtering by using useMemo and early returns (short-circuit evaluation)
+  const filteredTrains = useMemo(() => {
+    const query = searchTrain.trim().toLowerCase();
+    const isFilterAll = filter === "all";
 
-  const query = searchTrain.trim().toLowerCase();
-  const filteredTrains = (trains || []).filter((t: any) => {
-    const matchesQuery = !query ||
-      String(t.id).toLowerCase().includes(query) ||
-      String(t.name || "").toLowerCase().includes(query) ||
-      String(t.from || "").toLowerCase().includes(query) ||
-      String(t.to || "").toLowerCase().includes(query);
-    const cardStatus = mapStatusToCard(t.status);
-    const matchesFilter = filter === "all" || cardStatus === filter;
-    return matchesQuery && matchesFilter;
-  });
+    return (trains || []).filter((t: any) => {
+      // 1. Evaluate filter status first (fastest check)
+      if (!isFilterAll && mapStatusToCard(t.status) !== filter) {
+        return false;
+      }
+
+      // 2. Evaluate query matches (short circuit on first match)
+      if (!query) return true;
+
+      if (String(t.id).toLowerCase().includes(query)) return true;
+      if (String(t.name || "").toLowerCase().includes(query)) return true;
+      if (String(t.from || "").toLowerCase().includes(query)) return true;
+      if (String(t.to || "").toLowerCase().includes(query)) return true;
+
+      return false;
+    });
+  }, [trains, searchTrain, filter]);
 
   const handleSearch = async () => {
     // keep a tiny debounce to avoid spamming state
