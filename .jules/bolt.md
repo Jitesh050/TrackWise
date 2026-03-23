@@ -1,0 +1,3 @@
+## 2024-05-18 - [Optimizing Component Array Processing]
+**Learning:** Found a common performance anti-pattern across multiple pages where components evaluate \`.filter()\` multiple times sequentially over the same large array, resulting in O(K * N) operations, and frequently perform \`.toLowerCase()\` inside the filtering or mapping loops unnecessarily.
+**Action:** Consolidate repeated O(N) \`.filter().length\` array passes into a single O(N) \`.reduce()\` function. Hoist expensive invariant logic, like string \`.toLowerCase()\`, outside of component loops. Wrap these array passes in \`useMemo\` to prevent recalculation on every render when the array and search terms haven't changed.
