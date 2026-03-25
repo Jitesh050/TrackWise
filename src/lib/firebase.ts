@@ -24,7 +24,7 @@ const requiredKeys: Array<keyof typeof firebaseConfig> = [
 const missing = requiredKeys.filter((k) => !firebaseConfig[k]);
 if (missing.length) {
   // Provide a clear console error to guide setup
-  // eslint-disable-next-line no-console
+
   console.error(
     `Firebase env missing/invalid: ${missing.join(', ')}.\n` +
     'Add your Firebase Web App config to a .env file using VITE_FIREBASE_* keys and restart the dev server.'
