@@ -1397,6 +1397,7 @@ window.initializeSimulation = async function initializeSimulation() {
   
   // FIX: Force Leaflet to re-calculate and redraw the map bounds and all markers
   // This is often necessary when markers are added before the map is fully rendered.
+  map.invalidateSize();
   const allCoords = STATIONS.map(s => [s.lat, s.lon]);
   map.fitBounds(L.latLngBounds(allCoords), { padding: [10, 10] });
   
