@@ -1745,7 +1745,6 @@ window.calculateMetricsWithGroundTruth = function() {
     console.log("=========================================================================");
     console.log("             SIMULATED GROUND TRUTH PERFORMANCE (FINAL)               ");
     console.log("=========================================================================");
-    // FIX: Removed reference to undefined 'totalEvents' and used fixed length
     console.log(`Total Events Simulated: ${totalPositiveCases + totalNegativeCases}`); 
     console.log("\n--- BASELINE (EXISTING) MODEL ---");
     console.log(`TP: ${results.existing.TP}, FP: ${results.existing.FP}, FN: ${results.existing.FN}, TN: ${results.existing.TN}`);
