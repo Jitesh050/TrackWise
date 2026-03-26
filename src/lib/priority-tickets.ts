@@ -41,7 +41,9 @@ function readLS(): PriorityTicketRecord[] {
 function writeLS(tickets: PriorityTicketRecord[]) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(tickets));
-  } catch {}
+  } catch (error) {
+    console.error("Failed to write to localStorage", error);
+  }
 }
 
 export const priorityTicketsApi = {
