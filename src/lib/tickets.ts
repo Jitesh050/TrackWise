@@ -36,7 +36,9 @@ function readLS(): TicketRecord[] {
 function writeLS(tickets: TicketRecord[]) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(tickets));
-  } catch {}
+  } catch (error) {
+    console.error("Failed to write to localStorage", error);
+  }
 }
 
 export const ticketsApi = {
