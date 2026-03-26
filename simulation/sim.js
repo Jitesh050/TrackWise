@@ -300,7 +300,7 @@ function interpolateAlongPath(pathEdges, distanceKm, index){
         lon: pos.lon, 
         bearing: br, 
         edge: seg, 
-        progressKm: distanceKm 
+        progressKm: Math.max(0, remaining)
       };
     }
     remaining -= km;
@@ -308,13 +308,14 @@ function interpolateAlongPath(pathEdges, distanceKm, index){
   
   const last = pathEdges[pathEdges.length-1];
   const A = index[last.from], B = index[last.to];
+  const km = last.km || haversineKm(A.lat, A.lon, B.lat, B.lon);
   const br = bearingDeg(A.lat, A.lon, B.lat, B.lon);
   return { 
     lat: B.lat, 
     lon: B.lon, 
     bearing: br, 
     edge: last, 
-    progressKm: distanceKm 
+    progressKm: km
   };
 }
 
@@ -585,7 +586,8 @@ function predictStateAtTime(train, index, edges, when){
     lat: from.lat, 
     lon: from.lon, 
     bearing: 0, 
-    edge: null 
+    edge: null,
+    progressKm: 0
   };
   
   // FIX: Return all necessary fields (edge and progressKm) for GDM/Collision Detection
@@ -594,8 +596,8 @@ function predictStateAtTime(train, index, edges, when){
     lon: at.lon,
     bearing: at.bearing,
     edge: at.edge || null,
-    progressKm: alongKm
-}
+    progressKm: at.progressKm !== undefined ? at.progressKm : 0
+  };
 }
 
 // ---------- Graph Diffusion Model (GDM) ----------
