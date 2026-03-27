@@ -22,11 +22,15 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          vendor: ['react', 'react-dom', 'react-router-dom', 'lucide-react', '@tanstack/react-query'],
-          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage'],
-          ui: ['@radix-ui/react-dialog', '@radix-ui/react-slot', '@radix-ui/react-tooltip', '@radix-ui/react-popover', '@radix-ui/react-select', '@radix-ui/react-tabs', '@radix-ui/react-dropdown-menu'],
-          chart: ['recharts'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) return 'firebase';
+            if (id.includes('@radix-ui')) return 'ui';
+            if (id.includes('lucide-react')) return 'icons';
+            if (id.includes('recharts')) return 'chart';
+            if (id.includes('react') || id.includes('@tanstack/react-query')) return 'vendor';
+            return 'deps'; // catch-all for other dependencies
+          }
         },
       },
     },
