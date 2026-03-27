@@ -1,0 +1,7 @@
+## 2024-05-15 - [Consolidating loops and hoisting string operations]
+**Learning:** A critical codebase pattern to apply for performance optimization is to consolidate multiple O(N) array `.filter().length` operations into a single `.reduce()` pass wrapped in `useMemo`, and to hoist static string transformations like `.toLowerCase()` outside of iteration loops.
+**Action:** Always check React components that display statistics derived from large arrays. Use `useMemo` combined with `reduce` to compute multiple metrics in one pass rather than calling `.filter().length` multiple times. Hoist any `.toLowerCase()` calls on search terms outside the filter or reduce loop.
+
+## 2024-12-07 - [Extracting Static Helpers and Early Exits in Filters]
+**Learning:** Codebase pattern applied: when filtering large data arrays on every keystroke, moving static helpers (like `mapStatusToCard`) out of the component prevents constant recreation. Combined with `useMemo`, short-circuiting expensive checks (like `string.includes()`) by applying early-exit conditions (like `!query`) provides a massive reduction in rendering time.
+**Action:** Always check React components utilizing `.filter()` directly in the render path. Ensure `.filter()` uses early exits for performance, static helpers are hoisted, and results are memoized.

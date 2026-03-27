@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,14 @@ import { useSearchParams } from "react-router-dom";
 
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 import TrainStatusCard from "@/components/TrainStatusCard";
+
+const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+  const s = (status || "").toLowerCase();
+  if (s.includes("cancel")) return "cancelled";
+  if (s.includes("board")) return "boarding";
+  if (s.includes("delay")) return "delayed";
+  return "ontime";
+};
 
 const LiveTrainStatus = () => {
   const [searchTrain, setSearchTrain] = useState("");
@@ -22,25 +30,30 @@ const LiveTrainStatus = () => {
     if (q) setSearchTrain(q);
   }, [params]);
 
-  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-    const s = (status || "").toLowerCase();
-    if (s.includes("cancel")) return "cancelled";
-    if (s.includes("board")) return "boarding";
-    if (s.includes("delay")) return "delayed";
-    return "ontime";
-  };
+  const filteredTrains = useMemo(() => {
+    const query = searchTrain.trim().toLowerCase();
+    const trainList = trains || [];
 
-  const query = searchTrain.trim().toLowerCase();
-  const filteredTrains = (trains || []).filter((t: any) => {
-    const matchesQuery = !query ||
-      String(t.id).toLowerCase().includes(query) ||
-      String(t.name || "").toLowerCase().includes(query) ||
-      String(t.from || "").toLowerCase().includes(query) ||
-      String(t.to || "").toLowerCase().includes(query);
-    const cardStatus = mapStatusToCard(t.status);
-    const matchesFilter = filter === "all" || cardStatus === filter;
-    return matchesQuery && matchesFilter;
-  });
+    if (!query && filter === "all") return trainList;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return trainList.filter((t: any) => {
+      // Early exit on status filter
+      if (filter !== "all" && mapStatusToCard(t.status) !== filter) {
+        return false;
+      }
+
+      if (!query) return true;
+
+      // Short-circuit string match
+      return (
+        String(t.id).toLowerCase().includes(query) ||
+        String(t.name || "").toLowerCase().includes(query) ||
+        String(t.from || "").toLowerCase().includes(query) ||
+        String(t.to || "").toLowerCase().includes(query)
+      );
+    });
+  }, [trains, searchTrain, filter]);
 
   const handleSearch = async () => {
     // keep a tiny debounce to avoid spamming state
@@ -123,6 +136,7 @@ const LiveTrainStatus = () => {
 
       {/* Grid of train status cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
         {filteredTrains.map((t: any) => (
           <div key={t.id} className="space-y-2">
             <TrainStatusCard
@@ -139,9 +153,13 @@ const LiveTrainStatus = () => {
               progress={typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50)}
             />
             <div className="flex flex-wrap gap-2">
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Button size="sm" variant="outline" onClick={() => addDelay5(t)}>+5 min delay</Button>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Button size="sm" variant="outline" onClick={() => setOnTime(t)}>Set On Time</Button>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Button size="sm" variant="outline" onClick={() => setBoarding(t)}>Set Boarding</Button>
+              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
               <Button size="sm" variant="destructive" onClick={() => setCancelled(t)}>Cancel</Button>
             </div>
           </div>
