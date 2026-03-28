@@ -1,0 +1,3 @@
+## 2024-05-18 - Consolidate Multiple Array Passes
+**Learning:** React components often run multiple `.filter().length` passes on large arrays (like `tickets` or `users`) during each render. This causes O(N*M) performance bottlenecks where N is array size and M is the number of filters.
+**Action:** When I encounter multiple independent filters acting on the same array to calculate counts or filtered subsets, I will consolidate them into a single `useMemo` block that iterates through the array once and computes all required stats and the filtered subset simultaneously. Additionally, I will hoist any static transformation (like `searchTerm.toLowerCase()`) outside the loop to avoid redundant operations.
