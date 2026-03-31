@@ -20,46 +20,47 @@ const AuthWrapper: React.FC<{children: React.ReactNode}> = ({ children }) => {
 };
 
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import HomePage from "./pages/HomePage";
 import WelcomePage from "./pages/WelcomePage";
 import AdminDashboard from "./pages/AdminDashboard";
 import AdminHomePage from "./pages/AdminHomePage";
-import PassengerDashboard from "./pages/PassengerDashboard";
-import TrainStatus from "./pages/TrainStatus";
-import StationInfo from "./pages/StationInfo";
-import BookTicket from "./pages/BookTicket";
-// ChatBotPage removed; chatbot is embedded in Trip Planner
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import NotFound from "./pages/NotFound";
-import TicketDetailsPage from "./pages/TicketDetailsPage";
-import HelpCenter from "./pages/HelpCenter";
 import Layout from "./components/Layout";
 import ProtectedRoute from "./components/ProtectedRoute";
-import TripPlannerPage from "./pages/TripPlannerPage";
-import PaymentHistory from "./pages/PaymentHistory";
-import RateJourney from "./pages/RateJourney";
-import PriorityTicketManagement from "./components/admin/PriorityTicketManagement";
-import TicketManagement from "./pages/TicketManagement";
-import TrainManagement from "./pages/TrainManagement";
-import RouteManagement from "./pages/RouteManagement";
-import StationManagement from "./pages/StationManagement";
-import ScheduleManagement from "./pages/ScheduleManagement";
-import UserManagement from "./pages/UserManagement";
-import StaffManagement from "./pages/StaffManagement";
-import ReportsAnalytics from "./pages/ReportsAnalytics";
-import FinancialManagement from "./pages/FinancialManagement";
-import CustomerSupport from "./pages/CustomerSupport";
-import SystemMonitoring from "./pages/SystemMonitoring";
-import CollisionDetection from "./pages/CollisionDetection";
-import CrowdMonitoring from "./pages/CrowdMonitoring";
-import EnergyManagement from "./pages/EnergyManagement";
-import AIStationManagement from "./pages/AIStationManagement";
-import DatabaseManagement from "./pages/DatabaseManagement";
-import SystemSettings from "./pages/SystemSettings";
-import UserProfile from "./pages/UserProfile";
-import TicketsPage from "./pages/TicketsPage";
-import FoodOrdering from "./pages/FoodOrdering";
+import NotFound from "./pages/NotFound";
+
+const PassengerDashboard = lazy(() => import("./pages/PassengerDashboard"));
+const TrainStatus = lazy(() => import("./pages/TrainStatus"));
+const StationInfo = lazy(() => import("./pages/StationInfo"));
+const BookTicket = lazy(() => import("./pages/BookTicket"));
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const TicketDetailsPage = lazy(() => import("./pages/TicketDetailsPage"));
+const HelpCenter = lazy(() => import("./pages/HelpCenter"));
+const TripPlannerPage = lazy(() => import("./pages/TripPlannerPage"));
+const PaymentHistory = lazy(() => import("./pages/PaymentHistory"));
+const RateJourney = lazy(() => import("./pages/RateJourney"));
+const PriorityTicketManagement = lazy(() => import("./components/admin/PriorityTicketManagement"));
+const TicketManagement = lazy(() => import("./pages/TicketManagement"));
+const TrainManagement = lazy(() => import("./pages/TrainManagement"));
+const RouteManagement = lazy(() => import("./pages/RouteManagement"));
+const StationManagement = lazy(() => import("./pages/StationManagement"));
+const ScheduleManagement = lazy(() => import("./pages/ScheduleManagement"));
+const UserManagement = lazy(() => import("./pages/UserManagement"));
+const StaffManagement = lazy(() => import("./pages/StaffManagement"));
+const ReportsAnalytics = lazy(() => import("./pages/ReportsAnalytics"));
+const FinancialManagement = lazy(() => import("./pages/FinancialManagement"));
+const CustomerSupport = lazy(() => import("./pages/CustomerSupport"));
+const SystemMonitoring = lazy(() => import("./pages/SystemMonitoring"));
+const CollisionDetection = lazy(() => import("./pages/CollisionDetection"));
+const CrowdMonitoring = lazy(() => import("./pages/CrowdMonitoring"));
+const EnergyManagement = lazy(() => import("./pages/EnergyManagement"));
+const AIStationManagement = lazy(() => import("./pages/AIStationManagement"));
+const DatabaseManagement = lazy(() => import("./pages/DatabaseManagement"));
+const SystemSettings = lazy(() => import("./pages/SystemSettings"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const TicketsPage = lazy(() => import("./pages/TicketsPage"));
+const FoodOrdering = lazy(() => import("./pages/FoodOrdering"));
 
 const queryClient = new QueryClient();
 
@@ -71,6 +72,7 @@ const App = () => (
           <TooltipProvider>
             <Sonner />
             <BrowserRouter>
+              <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
               <Routes>
                 <Route path="/welcome" element={<WelcomePage />} />
                 <Route path="/login" element={<Login />} />
@@ -332,6 +334,7 @@ const App = () => (
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>
+              </Suspense>
             </BrowserRouter>
           </TooltipProvider>
         </div>
