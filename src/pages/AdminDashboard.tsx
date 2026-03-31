@@ -19,10 +19,12 @@ import {
   MapPin,
   Power
 } from "lucide-react";
+import { lazy, Suspense } from "react";
 import CollisionDetectionMap from "@/components/admin/CollisionDetectionMap";
 import CrowdDensityHeatmap from "@/components/admin/CrowdDensityHeatmap";
 import EnergyOptimizationControl from "@/components/admin/EnergyOptimizationControl";
-import PriorityTicketManagement from "@/components/admin/PriorityTicketManagement";
+
+const PriorityTicketManagement = lazy(() => import("@/components/admin/PriorityTicketManagement"));
 
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
@@ -85,7 +87,9 @@ const AdminDashboard = () => {
           </TabsContent>
 
           <TabsContent value="priority" className="space-y-6">
+          <Suspense fallback={<div>Loading tickets...</div>}>
             <PriorityTicketManagement />
+          </Suspense>
           </TabsContent>
 
           <TabsContent value="collision" className="space-y-6">
