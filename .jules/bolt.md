@@ -1,0 +1,3 @@
+## 2025-02-23 - Consolidate O(N) Passes and Hoist String Transforms
+**Learning:** Found a recurrent codebase-specific performance anti-pattern where components calculate derived statistics (e.g., active vs total vs admin users) by performing multiple independent O(N) `.filter().length` passes over the same dataset during render.
+**Action:** Always consolidate these multiple O(N) `.filter().length` operations into a single `.reduce()` pass and wrap the result in a `useMemo` block. Furthermore, when filtering based on text input, hoist the `.toLowerCase()` transformation of the input out of the iteration loop to avoid redundant string allocations per item.
