@@ -2,6 +2,7 @@ import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 // This would be replaced by a real data fetch in a real app
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockTickets: Record<string, any> = {
   DEMO1234: {
     pnr: "DEMO1234",

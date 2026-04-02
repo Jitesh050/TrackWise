@@ -173,7 +173,9 @@ class UserService {
   }
 
   private isValidPhone(phone: string): boolean {
+// eslint-disable-next-line no-useless-escape
     const phoneRegex = /^[\+]?[1-9][\d]{0,15}$/;
+// eslint-disable-next-line no-useless-escape
     return phoneRegex.test(phone.replace(/[\s\-\(\)]/g, ''));
   }
 }

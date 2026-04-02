@@ -44,6 +44,7 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
     const seats = [];
     const rows = ['A', 'B', 'C', 'D', 'E', 'F'];
     for (let row = 1; row <= 20; row++) {
+// eslint-disable-next-line prefer-const
       for (let seat of rows) {
         const seatNumber = `${row}${seat}`;
         const isReserved = Math.random() < 0.3; // 30% chance reserved

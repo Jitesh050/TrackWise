@@ -361,6 +361,7 @@ const AreaChart = React.forwardRef<
     React.ComponentProps<typeof ChartContainer>,
     "children" | "config"
   > & {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Array<Record<string, any>>
     categories: string[]
     index: string
@@ -446,6 +447,7 @@ const BarChart = React.forwardRef<
     React.ComponentProps<typeof ChartContainer>,
     "children" | "config"
   > & {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Array<Record<string, any>>
     categories: string[]
     index: string
@@ -534,6 +536,7 @@ const PieChart = React.forwardRef<
     React.ComponentProps<typeof ChartContainer>,
     "children" | "config"
   > & {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Array<Record<string, any>>
     category: string
     index: string

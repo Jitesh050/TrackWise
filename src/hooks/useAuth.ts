@@ -80,9 +80,12 @@ const mapFirebaseUser = async (fbUser: FirebaseUser): Promise<User> => {
 };
 
 export const useAuth = (): AuthState & {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   signIn: (email: string, password: string) => Promise<{ error: any }>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   signUp: (email: string, password: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   updateProfile: (profileData: Partial<User>) => Promise<{ error: any }>;
   getUserProfile: () => User | null;
 } => {

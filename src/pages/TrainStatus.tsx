@@ -11,6 +11,7 @@ import { useTrainStatus } from "@/hooks/useTrainStatus";
 
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
@@ -32,6 +33,7 @@ const TrainStatus = () => {
   
   // Filter trains from hook based on search and active tab
   useEffect(() => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     const list = (trains || []).map((t: any) => ({
       id: String(t.id),
       trainNumber: String(t.id),

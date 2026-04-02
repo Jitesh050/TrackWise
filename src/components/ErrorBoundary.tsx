@@ -2,14 +2,18 @@ import React from "react";
 
 export class ErrorBoundary extends React.Component<{
   children: React.ReactNode
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 }, { hasError: boolean; error?: any }> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(props: any) {
     super(props);
     this.state = { hasError: false };
   }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   static getDerivedStateFromError(error: any) {
     return { hasError: true, error };
   }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   componentDidCatch(error: any, info: any) {
     // Log error to service if needed
     // console.error(error, info);

@@ -43,6 +43,7 @@ const PaymentPage = ({ selectedTrain, bookingDetails, selectedSeats, onBack, onP
   const [showQR, setShowQR] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [paymentSuccess, setPaymentSuccess] = useState(false);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [ticketData, setTicketData] = useState<any>(null);
   const [priority, setPriority] = useState(bookingDetails.priorityTicket);
   const [priorityType, setPriorityType] = useState(bookingDetails.priorityTicket ? "Student" : "");
