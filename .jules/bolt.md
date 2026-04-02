@@ -1,0 +1,3 @@
+## 2024-03-XX - [Array Iteration Optimization in TicketManagement]
+**Learning:** Consolidating multiple O(N) array `.filter().length` passes into a single `.reduce()` pass and hoisting static string transformations like `.toLowerCase()` outside of iteration loops is a highly effective, codebase-wide performance optimization pattern, particularly for stats calculation on large lists.
+**Action:** Always look for opportunities to replace chained or repeated `.filter()` operations with single-pass `.reduce()` blocks wrapped in `useMemo` hooks to prevent redundant traversals and string allocations.

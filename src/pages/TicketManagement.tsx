@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,13 +42,33 @@ const TicketManagement = () => {
     setLoading(false);
   };
 
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.trainNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  // ⚡ Bolt Optimization: Memoize filtered array to prevent recalculation on every render
+  // Hoist searchTerm.toLowerCase() outside the filter loop to avoid redundant string allocations
+  const filteredTickets = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return tickets.filter(ticket => {
+      const matchesSearch =
+        ticket.passengerName.toLowerCase().includes(lowerSearch) ||
+        ticket.pnr.toLowerCase().includes(lowerSearch) ||
+        ticket.trainNumber.toLowerCase().includes(lowerSearch);
+      const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
+  }, [tickets, searchTerm, filterStatus]);
+
+  // ⚡ Bolt Optimization: Consolidate three separate O(N) .filter().length passes
+  // into a single O(N) .reduce() pass, and memoize the result.
+  const stats = useMemo(() => {
+    return tickets.reduce(
+      (acc, t) => {
+        if (t.status === "Confirmed") acc.confirmed++;
+        else if (t.status === "Waiting") acc.waiting++;
+        else if (t.status === "Cancelled") acc.cancelled++;
+        return acc;
+      },
+      { confirmed: 0, waiting: 0, cancelled: 0 }
+    );
+  }, [tickets]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -96,7 +116,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Confirmed</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {tickets.filter(t => t.status === "Confirmed").length}
+                  {stats.confirmed}
                 </p>
               </div>
             </div>
@@ -110,7 +130,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Waiting</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {tickets.filter(t => t.status === "Waiting").length}
+                  {stats.waiting}
                 </p>
               </div>
             </div>
@@ -124,7 +144,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Cancelled</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {tickets.filter(t => t.status === "Cancelled").length}
+                  {stats.cancelled}
                 </p>
               </div>
             </div>
