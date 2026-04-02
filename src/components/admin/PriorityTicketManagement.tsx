@@ -76,17 +76,29 @@ const PriorityTicketManagement = () => {
     }
   };
 
-  const filteredTickets = priorityTickets.filter(ticket => {
-    const matchesFilter = filterType === "all" || ticket.priorityType === filterType;
-    const matchesSearch = ticket.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.trainNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  const stats = React.useMemo(() => {
+    return priorityTickets.reduce(
+      (acc, ticket) => {
+        if (ticket.status === "Pending") acc.pending++;
+        else if (ticket.status === "Approved") acc.approved++;
+        else if (ticket.status === "Rejected") acc.rejected++;
+        return acc;
+      },
+      { pending: 0, approved: 0, rejected: 0 }
+    );
+  }, [priorityTickets]);
 
-  const pendingTickets = priorityTickets.filter(t => t.status === "Pending");
-  const approvedTickets = priorityTickets.filter(t => t.status === "Approved");
-  const rejectedTickets = priorityTickets.filter(t => t.status === "Rejected");
+  const filteredTickets = React.useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    return priorityTickets.filter(ticket => {
+      const matchesFilter = filterType === "all" || ticket.priorityType === filterType;
+      const matchesSearch =
+        ticket.passengerName.toLowerCase().includes(searchLower) ||
+        ticket.pnr.toLowerCase().includes(searchLower) ||
+        ticket.trainNumber.toLowerCase().includes(searchLower);
+      return matchesFilter && matchesSearch;
+    });
+  }, [priorityTickets, filterType, searchTerm]);
 
   if (loading) {
     return (
@@ -106,7 +118,7 @@ const PriorityTicketManagement = () => {
               <Clock className="h-4 w-4 text-yellow-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{pendingTickets.length}</p>
+                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
               </div>
             </div>
           </CardContent>
@@ -118,7 +130,7 @@ const PriorityTicketManagement = () => {
               <CheckCircle className="h-4 w-4 text-green-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{approvedTickets.length}</p>
+                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
               </div>
             </div>
           </CardContent>
@@ -130,7 +142,7 @@ const PriorityTicketManagement = () => {
               <XCircle className="h-4 w-4 text-red-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">{rejectedTickets.length}</p>
+                <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
               </div>
             </div>
           </CardContent>
