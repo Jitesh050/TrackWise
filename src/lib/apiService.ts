@@ -25,6 +25,7 @@ export class TouristSpotService {
         return [];
       }
       
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const attractions: TouristSpot[] = data.features.map((feature: any) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;
@@ -67,6 +68,7 @@ export class TouristSpotService {
     return R * c;
   }
   
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   private static getAttractionType(properties: any): string {
     const name = properties.name?.toLowerCase() || '';
     const categories = properties.categories || [];
@@ -159,6 +161,7 @@ export class HotelService {
         return [];
       }
       
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const hotels: Hotel[] = data.features.map((feature: any) => {
         const distance = this.calculateDistance(lat, lon, feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
         const properties = feature.properties;

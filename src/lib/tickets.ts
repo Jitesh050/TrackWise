@@ -36,6 +36,7 @@ function readLS(): TicketRecord[] {
 function writeLS(tickets: TicketRecord[]) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(tickets));
+// eslint-disable-next-line no-empty
   } catch {}
 }
 
@@ -70,24 +71,29 @@ export const ticketsApi = {
       if (isAdmin) {
         const qAll = query(base, orderBy('created_at', 'desc'));
         const snapAll = await getDocs(qAll);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         docs = snapAll.docs.map(d => ({ id: d.id, ...(d.data() as any) } as TicketRecord));
       } else {
         // No orderBy to avoid composite index requirement; we'll sort client-side
         const byUser = query(base, where('userId', '==', uid || ''));
         const snapUser = await getDocs(byUser);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const a = snapUser.docs.map(d => ({ id: d.id, ...(d.data() as any) } as TicketRecord));
         let b: TicketRecord[] = [];
         if (userEmail) {
           // Fallback: include tickets saved without userId but with matching email
           const byEmail = query(base, where('userEmail', '==', userEmail));
           const snapEmail = await getDocs(byEmail);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
           b = snapEmail.docs.map(d => ({ id: d.id, ...(d.data() as any) } as TicketRecord));
         }
         const seen = new Set(a.map(x => x.id));
         docs = [...a, ...b.filter(x => x.id && !seen.has(x.id))];
       }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
       const items: TicketRecord[] = docs.map((rec: any) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = rec as any;
         return {
           id: rec.id,

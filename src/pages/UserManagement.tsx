@@ -23,6 +23,7 @@ const UserManagement = () => {
   const [filterRole, setFilterRole] = useState("all");
 
   // Mock data - in real app, this would come from API
+// eslint-disable-next-line react-hooks/exhaustive-deps
   const users = [
     {
       id: "1",

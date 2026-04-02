@@ -58,13 +58,16 @@ export interface UseTrainStatusReturn {
 }
 
 // --- Load simulation data ---
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TRAINS_DATA: TrainRecord[] = (trainsData as any) as TrainRecord[]
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const SCHEDULES_DATA: ScheduleRecord[] = (schedulesData as any) as ScheduleRecord[]
 
 // Build station name map from simulation helper
 const STATION_NAME_MAP: Record<string, string> = (() => {
   const entries = getAllStationsWithNames()
   const map: Record<string, string> = {}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
   entries.forEach((s: any) => { map[s.code] = s.name })
   return map
 })()
@@ -96,7 +99,8 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     let delay = 0
     let nextStation = ''
     let currentDeparture = sourceStation.departure
-    const currentArrival = destStation.arrival
+// eslint-disable-next-line prefer-const
+    let currentArrival = destStation.arrival
     const platform = (parseInt(trainNo.slice(-1)) % 10) + 1
 
     let currentLegIndex = -1

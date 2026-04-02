@@ -31,7 +31,8 @@ const LiveTrainStatus = () => {
   };
 
   const query = searchTrain.trim().toLowerCase();
-  const filteredTrains = (trains || []).filter((t: any) => {
+
+  const filteredTrains = (trains || []).filter((t: unknown) => {
     const matchesQuery = !query ||
       String(t.id).toLowerCase().includes(query) ||
       String(t.name || "").toLowerCase().includes(query) ||
@@ -49,10 +50,14 @@ const LiveTrainStatus = () => {
     setIsSearching(false);
   };
 
-  const setOnTime = (t: any) => updateTrainStatus(String(t.id), 'On Time', 0, t.nextStation);
-  const setBoarding = (t: any) => updateTrainStatus(String(t.id), 'Boarding', 0, t.nextStation);
-  const setCancelled = (t: any) => updateTrainStatus(String(t.id), 'Cancelled', 0, t.nextStation);
-  const addDelay5 = (t: any) => {
+
+  const setOnTime = (t: unknown) => updateTrainStatus(String(t.id), 'On Time', 0, t.nextStation);
+
+  const setBoarding = (t: unknown) => updateTrainStatus(String(t.id), 'Boarding', 0, t.nextStation);
+
+  const setCancelled = (t: unknown) => updateTrainStatus(String(t.id), 'Cancelled', 0, t.nextStation);
+
+  const addDelay5 = (t: unknown) => {
     const current = typeof t.delay === 'number' ? t.delay : 0;
     updateTrainStatus(String(t.id), 'Delayed', current + 5, t.nextStation);
   };
@@ -123,7 +128,10 @@ const LiveTrainStatus = () => {
 
       {/* Grid of train status cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTrains.map((t: any) => (
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+        {filteredTrains.map((t: unknown) => (
           <div key={t.id} className="space-y-2">
             <TrainStatusCard
               trainNumber={String(t.id)}

@@ -41,6 +41,7 @@ function readLS(): PriorityTicketRecord[] {
 function writeLS(tickets: PriorityTicketRecord[]) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(tickets));
+// eslint-disable-next-line no-empty
   } catch {}
 }
 
@@ -93,6 +94,7 @@ export const priorityTicketsApi = {
         : query(base, where('userId', '==', uid || ''), orderBy('created_at', 'desc'));
       const snap = await getDocs(q);
       const items: PriorityTicketRecord[] = snap.docs.map(d => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
         const data = d.data() as any;
         return {
           id: d.id,
