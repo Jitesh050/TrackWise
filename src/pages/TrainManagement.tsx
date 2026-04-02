@@ -22,7 +22,8 @@ const TrainManagement = () => {
   const [filterStatus, setFilterStatus] = useState("all");
 
   // Mock data - in real app, this would come from API
-  const trains = [
+  // Wrapped in useMemo to prevent unnecessary dependency changes
+  const trains = React.useMemo(() => [
     {
       id: "1",
       trainNumber: "12345",
@@ -59,15 +60,37 @@ const TrainManagement = () => {
       estimatedArrival: "16:45",
       occupancy: 0
     }
-  ];
+  ], []);
 
-  const filteredTrains = trains.filter(train => {
-    const matchesSearch = train.trainName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.trainNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.route.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || train.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  // ⚡ Bolt: Consolidate multiple O(N) array passes into a single pass and wrap in useMemo
+  // Reduces 4 separate array traversals (.filter x2, .reduce x2) down to 1 pass for stats,
+  // plus 1 optimized pass for filtering where static string ops are hoisted.
+  const { filteredTrains, stats } = React.useMemo(() => {
+    // 1. Calculate overall stats in a single pass instead of 4 separate O(N) passes
+    const calculatedStats = trains.reduce(
+      (acc, train) => {
+        if (train.status === "Active") acc.active++;
+        if (train.status === "Maintenance") acc.maintenance++;
+        acc.totalCapacity += train.capacity;
+        acc.totalOccupancy += train.occupancy;
+        return acc;
+      },
+      { active: 0, maintenance: 0, totalCapacity: 0, totalOccupancy: 0 }
+    );
+
+    // 2. Filter trains with hoisted search term logic
+    const searchLower = searchTerm.toLowerCase();
+    const filtered = trains.filter((train) => {
+      const matchesSearch =
+        train.trainName.toLowerCase().includes(searchLower) ||
+        train.trainNumber.toLowerCase().includes(searchLower) ||
+        train.route.toLowerCase().includes(searchLower);
+      const matchesFilter = filterStatus === "all" || train.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
+
+    return { filteredTrains: filtered, stats: calculatedStats };
+  }, [trains, searchTerm, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,7 +130,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Trains</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {trains.filter(t => t.status === "Active").length}
+                  {stats.active}
                 </p>
               </div>
             </div>
@@ -121,7 +144,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Maintenance</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {trains.filter(t => t.status === "Maintenance").length}
+                  {stats.maintenance}
                 </p>
               </div>
             </div>
@@ -135,7 +158,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Capacity</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {trains.reduce((sum, train) => sum + train.capacity, 0).toLocaleString()}
+                  {stats.totalCapacity.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -149,7 +172,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg Occupancy</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {Math.round(trains.reduce((sum, train) => sum + train.occupancy, 0) / trains.length)}%
+                  {trains.length > 0 ? Math.round(stats.totalOccupancy / trains.length) : 0}%
                 </p>
               </div>
             </div>
