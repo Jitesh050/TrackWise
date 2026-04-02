@@ -1,0 +1,3 @@
+## 2025-01-24 - [Missing Memoization and Redundant Derived States in Dashboard]
+**Learning:** Derived states based on array data (like `tickets` in dashboards) are often calculated independently, leading to repeated O(N) iterations (e.g. `.filter()`, `.map()`) and expensive object/Map recreations on every render.
+**Action:** When computing multiple derived statistics from a single dataset, consolidate the calculations into a single `.reduce()` or unified iteration block wrapped in `useMemo()` to prevent unnecessary recalculations and overhead during React renders.
