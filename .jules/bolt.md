@@ -1,0 +1,3 @@
+## 2024-05-24 - [Optimize Component Rendering with useMemo and Single-pass Reduce]
+**Learning:** Consolidating multiple O(N) array `.filter().length` or `.reduce()` passes into a single pass block drastically reduces redundant iterations and allocations. Combining this with hoisting static operations (like `.toLowerCase()`) outside loops and wrapping the computation in `useMemo` avoids performance-heavy recalculations on every render.
+**Action:** Always identify operations making repeated passes over the same dataset for stats derivations and refactor them into a single pass using `reduce` or manual loop, and memoize the result.
