@@ -7,34 +7,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Search, MessageCircle, Phone, Mail, HelpCircle, Send } from "lucide-react";
 
-// ⚡ Bolt: Moved static faqs array outside component to prevent unnecessary memory allocation on every render
-const faqs = [
-  {
-    question: "How do I book a ticket online?",
-    answer: "To book a ticket online, go to the 'Book Ticket' section, enter your journey details including origin, destination, date, and number of passengers. Select your preferred train and class, then proceed to seat selection and payment."
-  },
-  {
-    question: "Can I cancel my ticket?",
-    answer: "Yes, you can cancel your ticket through the 'User Portal' under 'My Tickets'. Cancellation charges may apply depending on the time of cancellation. Full refund is available if cancelled 24 hours before departure."
-  },
-  {
-    question: "How do I check train status?",
-    answer: "Visit the 'Train Status' page and search by train number, name, or station. You'll get real-time updates on delays, platform changes, and current location of your train."
-  },
-  {
-    question: "What if I miss my train?",
-    answer: "If you miss your train, you can either reschedule your ticket for the next available train (subject to availability and charges) or request a refund. Contact our customer service for assistance."
-  },
-  {
-    question: "How do I download my e-ticket?",
-    answer: "After successful booking, your e-ticket will be available in the 'User Portal' under 'My Tickets'. You can download it as a PDF or save the QR code to your phone for contactless travel."
-  },
-  {
-    question: "What are the baggage limits?",
-    answer: "Economy class: 20kg, Business class: 30kg, First class: 40kg. Additional charges apply for excess baggage. Prohibited items include flammable substances, weapons, and hazardous materials."
-  }
-];
-
 const HelpCenter = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [chatMessage, setChatMessage] = useState("");
@@ -46,6 +18,33 @@ const HelpCenter = () => {
       timestamp: new Date()
     }
   ]);
+
+  const faqs = [
+    {
+      question: "How do I book a ticket online?",
+      answer: "To book a ticket online, go to the 'Book Ticket' section, enter your journey details including origin, destination, date, and number of passengers. Select your preferred train and class, then proceed to seat selection and payment."
+    },
+    {
+      question: "Can I cancel my ticket?",
+      answer: "Yes, you can cancel your ticket through the 'User Portal' under 'My Tickets'. Cancellation charges may apply depending on the time of cancellation. Full refund is available if cancelled 24 hours before departure."
+    },
+    {
+      question: "How do I check train status?",
+      answer: "Visit the 'Train Status' page and search by train number, name, or station. You'll get real-time updates on delays, platform changes, and current location of your train."
+    },
+    {
+      question: "What if I miss my train?",
+      answer: "If you miss your train, you can either reschedule your ticket for the next available train (subject to availability and charges) or request a refund. Contact our customer service for assistance."
+    },
+    {
+      question: "How do I download my e-ticket?",
+      answer: "After successful booking, your e-ticket will be available in the 'User Portal' under 'My Tickets'. You can download it as a PDF or save the QR code to your phone for contactless travel."
+    },
+    {
+      question: "What are the baggage limits?",
+      answer: "Economy class: 20kg, Business class: 30kg, First class: 40kg. Additional charges apply for excess baggage. Prohibited items include flammable substances, weapons, and hazardous materials."
+    }
+  ];
 
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();

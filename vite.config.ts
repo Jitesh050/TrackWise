@@ -22,21 +22,25 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
+        // ⚡ Bolt: Split heavy dependencies into separate chunks to prevent monolithic >500kb bundle.
+        // Impact: Reduces initial load time by allowing parallel downloads and improves browser caching.
         manualChunks(id) {
           if (id.includes('node_modules')) {
-            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+            const moduleName = id.split('node_modules/')[1].split('/')[0];
+
+            if (['react', 'react-dom', 'react-router-dom'].includes(moduleName)) {
               return 'vendor-react';
             }
-            if (id.includes('firebase')) {
+            if (moduleName === 'firebase') {
               return 'vendor-firebase';
             }
-            if (id.includes('@radix-ui')) {
+            if (moduleName === '@radix-ui') {
               return 'vendor-radix';
             }
-            if (id.includes('lucide-react') || id.includes('recharts') || id.includes('embla-carousel')) {
+            if (['lucide-react', 'recharts', 'embla-carousel-react'].includes(moduleName)) {
               return 'vendor-ui';
             }
-            return 'vendor'; // generic vendor chunk for other dependencies
+            return 'vendor';
           }
         }
       },
