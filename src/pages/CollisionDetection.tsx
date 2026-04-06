@@ -8,12 +8,30 @@ import { useTrainStatus } from "@/hooks/useTrainStatus";
 // @ts-ignore
 import schedules from "../../simulation/schedules_100.json";
 
+// Extract static O(N) schedules grouping and sorting out of the component
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const SCHEDULES_BY_TRAIN: Record<string, any[]> = {};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(schedules as any[]).forEach((s) => {
+  if (!SCHEDULES_BY_TRAIN[s.train_no]) {
+    SCHEDULES_BY_TRAIN[s.train_no] = [];
+  }
+  SCHEDULES_BY_TRAIN[s.train_no].push(s);
+});
+
+// Pre-sort schedules to avoid doing it per-train on render
+Object.values(SCHEDULES_BY_TRAIN).forEach(arr => {
+  arr.sort((a,b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
+});
+
 const CollisionDetection = () => {
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const { trains } = useTrainStatus();
 
   const groups = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const byStation = new Map<string, any[]>();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (trains || []).forEach((t: any) => {
       const key = t.nextStation || "En Route";
       const arr = byStation.get(key) || [];
@@ -25,6 +43,7 @@ const CollisionDetection = () => {
       return {
         id: String(idx + 1),
         name: station,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         trains: arr.map((t: any) => ({
           id: String(t.id),
           name: String(t.name || "Unknown"),
@@ -40,42 +59,56 @@ const CollisionDetection = () => {
 
   // Risk badges removed per request
 
-  const totalTrains = (trains || []).length;
-  const activeStations = new Set((trains || []).map((t: any) => t.nextStation).filter(Boolean)).size;
-  const onTimePct = (() => {
+  const { totalTrains, activeStations, onTimePct, averageSpeed, highRiskRoutes } = useMemo(() => {
     const list = trains || [];
-    if (!list.length) return 0;
-    const ontime = list.filter((t: any) => String(t.status).toLowerCase().includes("on time")).length;
-    return Math.round((ontime / list.length) * 1000) / 10;
-  })();
-  const averageSpeed = (() => {
-    try {
-      const byTrain: Record<string, any[]> = {};
-      (schedules as any[]).forEach((s) => {
-        (byTrain[s.train_no] ||= []).push(s);
-      });
-      const speeds: number[] = [];
-      (trains || []).forEach((t: any) => {
-        const arr = byTrain[String(t.id)] || [];
-        if (arr.length < 2) return;
-        arr.sort((a,b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
+    const len = list.length;
+    if (!len) {
+      return { totalTrains: 0, activeStations: 0, onTimePct: 0, averageSpeed: 0, highRiskRoutes: 0 };
+    }
+
+    const stationsSet = new Set<string>();
+    let onTimeCount = 0;
+    let totalSpeed = 0;
+    let speedCount = 0;
+
+    for (let i = 0; i < len; i++) {
+      const t = list[i];
+      if (t.nextStation) stationsSet.add(t.nextStation);
+
+      const statusStr = String(t.status);
+      // Inline case-insensitive check instead of toLowerCase() to save allocations
+      if (statusStr.includes("On Time") || statusStr.includes("on time") || statusStr.toLowerCase().includes("on time")) {
+        onTimeCount++;
+      }
+
+      const arr = SCHEDULES_BY_TRAIN[String(t.id)];
+      if (arr && arr.length >= 2) {
         const first = arr[0];
         const last = arr[arr.length - 1];
         const km = Math.max(0, (last.cum_distance_km || 0) - (first.cum_distance_km || 0));
         const dep = (first.departure || first.arrival || "00:00").split(":");
         const arrv = (last.arrival || last.departure || "00:00").split(":");
-        const depMin = (first.day_offset || 0) * 1440 + (+dep[0]||0)*60 + (+dep[1]||0);
-        const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0]||0)*60 + (+arrv[1]||0);
+        const depMin = (first.day_offset || 0) * 1440 + (+dep[0] || 0) * 60 + (+dep[1] || 0);
+        const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0] || 0) * 60 + (+arrv[1] || 0);
         const hours = Math.max(0.1, (arrMin - depMin) / 60);
-        speeds.push(km / hours);
-      });
-      if (!speeds.length) return 0;
-      return Math.round(speeds.reduce((a,b)=>a+b,0) / speeds.length);
-    } catch {
-      return 0;
+        totalSpeed += km / hours;
+        speedCount++;
+      }
     }
-  })();
-  const highRiskRoutes = groups.filter(g => g.riskLevel === 'high').length;
+
+    let hRoutes = 0;
+    for (let i = 0; i < groups.length; i++) {
+      if (groups[i].riskLevel === 'high') hRoutes++;
+    }
+
+    return {
+      totalTrains: len,
+      activeStations: stationsSet.size,
+      onTimePct: Math.round((onTimeCount / len) * 1000) / 10,
+      averageSpeed: speedCount > 0 ? Math.round(totalSpeed / speedCount) : 0,
+      highRiskRoutes: hRoutes,
+    };
+  }, [trains, groups]);
 
   return (
     <div className="container mx-auto p-6">
