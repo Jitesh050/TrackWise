@@ -10,6 +10,17 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return id.split('node_modules/')[1].split('/')[0];
+          }
+        }
+      }
+    }
+  },
   plugins: [
     react(),
     mode === 'development' && componentTagger(),
