@@ -35,7 +35,8 @@ const WelcomePage = () => {
     try {
       await signIn(email, password);
       // Decide route by role stored in Firestore
-      const uid = (await import("firebase/auth")).getAuth().currentUser?.uid;
+      // Auth is already statically imported at the top of the file via useAuth/lib/firebase, no need for dynamic import
+      const uid = user?.uid;
       if (uid) {
         const adminSnap = await getDoc(doc(db, "admins", uid));
         if (adminSnap.exists()) {
