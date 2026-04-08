@@ -1,0 +1,3 @@
+## 2023-10-27 - Consolidate Multiple Array Filter operations in React
+**Learning:** Multiple array `.filter().length` passes on the same dataset inside a React component trigger redundant O(N) iterations on every render. Additionally, string manipulations like `toLowerCase()` inside iteration callbacks execute N times unnecessarily.
+**Action:** Consolidate multiple `.filter().length` passes into a single `.reduce()` operation. Hoist static string transformations (like `toLowerCase()`) outside the iteration loop. Always wrap these derivations in a `useMemo` hook to skip recalculation when dependencies haven't changed.
