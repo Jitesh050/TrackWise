@@ -1,0 +1,3 @@
+## 2024-03-24 - [Optimize Vite Build Chunking]
+**Learning:** Netlify CI deployments fail on Vite chunk size warnings. The default rollup configuration lumps all dependencies into a single massive `vendor.js` chunk that often exceeds the 500kB warning limit, breaking the CI pipeline. Furthermore, because this repository uses `pnpm`, dependencies are symlinked from `.pnpm` directories, meaning path-based splitting like `id.split('node_modules/')[1]` fails to match the actual library name.
+**Action:** Implement `manualChunks` in `vite.config.ts` to logically separate heavy dependencies (like firebase, react, mapbox) into isolated chunks. Use `id.includes('library-name')` rather than directory splitting to accurately identify modules in a pnpm environment.
