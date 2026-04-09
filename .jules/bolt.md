@@ -1,0 +1,3 @@
+## 2024-03-24 - [Optimize Component Rendering With useMemo]
+**Learning:** In a codebase with lists or arrays being filtered or processed inside components, a common performance bottleneck is recalculating these derived arrays on every render (e.g. `stations.filter()`). Additionally, calling functions like `toLowerCase()` inside an array iteration for static comparison variables forces a redundant calculation O(N) times instead of O(1).
+**Action:** When filtering or aggregating an array based on component state, hoist any static string processing outside of the iteration loop, and wrap the entire calculation in `useMemo` with proper dependencies, avoiding unneeded garbage collection and redundant processing loops.
