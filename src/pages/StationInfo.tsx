@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,18 +8,12 @@ import { stations as stationList } from "@/lib/stationData";
 
 const StationInfo = () => {
   const [searchQuery, setSearchQuery] = useState("");
-
-  // Bolt: Optimized StationInfo search to prevent redundant array and string processing
-  const stations = useMemo(() => {
-    const query = searchQuery.toLowerCase();
-    if (!query) return stationList;
-
-    return stationList.filter(s =>
-      s.id.toLowerCase().includes(query) ||
-      s.name.toLowerCase().includes(query) ||
-      s.state.toLowerCase().includes(query)
+  const stations = stationList
+    .filter(s =>
+      s.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      s.state.toLowerCase().includes(searchQuery.toLowerCase())
     );
-  }, [searchQuery]);
 
   return (
     <div className="container mx-auto space-y-8 pb-10 animate-enter">
