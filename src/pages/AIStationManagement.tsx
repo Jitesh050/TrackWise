@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useRef } from "react";
+import { useMemo, useState, useEffect, useRef, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ const AIStationManagement = () => {
     }
   };
 
-  const addAnnouncement = (station: string, message: string, type: "arrival" | "delay") => {
+  const addAnnouncement = useCallback((station: string, message: string, type: "arrival" | "delay") => {
     const entry: StationAnnouncement = {
       id: Math.random().toString(36).slice(2),
       station,
@@ -56,7 +56,7 @@ const AIStationManagement = () => {
     };
     setAnnouncements((prev) => [entry, ...prev].slice(0, 100));
     speak(message);
-  };
+  }, []);
 
   const handleAnnounceArrivals = (station: string, list: any[]) => {
     // Announce trains whose ETA time string is within the next 30 minutes if available, else all next 3
@@ -144,7 +144,14 @@ const AIStationManagement = () => {
     return () => clearInterval(interval);
   }, [trains]);
 
-  const visibleGroups = groups.filter(g => !filter || g.station.toLowerCase().includes(filter.toLowerCase()));
+  // ⚡ Bolt Performance Optimization
+  // 1. Memoized visibleGroups to prevent unnecessary recalculations on re-renders
+  // 2. Hoisted filter.toLowerCase() outside the O(N) filter loop
+  const visibleGroups = useMemo(() => {
+    if (!filter) return groups;
+    const lowerFilter = filter.toLowerCase();
+    return groups.filter(g => g.station.toLowerCase().includes(lowerFilter));
+  }, [groups, filter]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
