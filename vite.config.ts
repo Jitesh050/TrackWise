@@ -10,6 +10,21 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'vendor-react';
+            if (id.includes('lucide-react')) return 'vendor-icons';
+            if (id.includes('firebase')) return 'vendor-firebase';
+            if (id.includes('mapbox') || id.includes('leaflet')) return 'vendor-maps';
+            return 'vendor';
+          }
+        }
+      }
+    }
+  },
   plugins: [
     react(),
     mode === 'development' && componentTagger(),

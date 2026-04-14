@@ -1,0 +1,3 @@
+## 2024-06-12 - PassengerDashboard Multi-pass Reduction and Map Hoisting
+**Learning:** Recreating a Map (e.g., `new Map(stations.map(...))`) inside a component creates an unnecessary O(N) allocation on every render, and chaining array methods (`.filter()`, `.map()`, `.reduce()`) multiple times for derived data results in repeated iterations over the same array.
+**Action:** Extract static dictionary Maps outside of the React component to module scope. Consolidate multiple iterative array passes for derived data into a single loop wrapped in a `useMemo` block to execute only when dependencies change.
