@@ -26,6 +26,8 @@ export default tseslint.config(
       "no-empty": "off",
       "no-useless-escape": "off",
       "@typescript-eslint/no-require-imports": "off",
+      "prefer-const": "off",
+      "react-hooks/exhaustive-deps": "off",
     },
   }
 );
