@@ -1,12 +1,16 @@
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { X, AlertTriangle, Clock } from "lucide-react";
+import { useMemo } from "react";
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 
 const AnnouncementBanner = () => {
   const { trains } = useTrainStatus();
 
-  const delayed = (trains || []).filter((t: any) => String(t.status).toLowerCase().includes('delay'));
+  const delayed = useMemo(() => {
+    return (trains || []).filter((t: any) => String(t.status).toLowerCase().includes('delay'));
+  }, [trains]);
+
   if (delayed.length === 0) return null;
 
   const title = 'Service Delays';

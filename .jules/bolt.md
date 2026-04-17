@@ -1,0 +1,3 @@
+## 2024-05-17 - [Optimizing array filtering in AnnouncementBanner.tsx]
+**Learning:** React component derived state computations with unmemoized array `filter` operations on frequently updated data arrays, like train statuses, can cause redundant allocations and slow down renders. Even when the operation returns empty or small arrays, executing `(trains || []).filter` inline scales poorly if the component re-renders frequently from parent updates or hooks.
+**Action:** Always wrap derived filtering logic of arrays coming from external hooks inside `useMemo` hooks when performance is a concern, so the expensive operation is bound to changes in the dependencies, rather than every react lifecycle render tick.
