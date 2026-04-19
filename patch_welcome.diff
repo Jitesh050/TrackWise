@@ -1,0 +1,10 @@
+--- src/pages/WelcomePage.tsx
++++ src/pages/WelcomePage.tsx
+@@ -45,8 +45,7 @@
+       }
+       navigate("/passenger");
+     } catch (error) {
+-      // eslint-disable-next-line no-console
+       console.error("Login error:", error);
+     }
+   };
