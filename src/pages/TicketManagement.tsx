@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -42,13 +42,29 @@ const TicketManagement = () => {
     setLoading(false);
   };
 
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.trainNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const stats = useMemo(() => {
+    return tickets.reduce(
+      (acc, t) => {
+        if (t.status === "Confirmed") acc.confirmed++;
+        else if (t.status === "Waiting") acc.waiting++;
+        else if (t.status === "Cancelled") acc.cancelled++;
+        acc.total++;
+        return acc;
+      },
+      { confirmed: 0, waiting: 0, cancelled: 0, total: 0 }
+    );
+  }, [tickets]);
+
+  const filteredTickets = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    return tickets.filter(ticket => {
+      const matchesSearch = ticket.passengerName.toLowerCase().includes(searchLower) ||
+                           ticket.pnr.toLowerCase().includes(searchLower) ||
+                           ticket.trainNumber.toLowerCase().includes(searchLower);
+      const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
+  }, [tickets, searchTerm, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -96,7 +112,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Confirmed</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {tickets.filter(t => t.status === "Confirmed").length}
+                  {stats.confirmed}
                 </p>
               </div>
             </div>
@@ -110,7 +126,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Waiting</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {tickets.filter(t => t.status === "Waiting").length}
+                  {stats.waiting}
                 </p>
               </div>
             </div>
@@ -124,7 +140,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Cancelled</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {tickets.filter(t => t.status === "Cancelled").length}
+                  {stats.cancelled}
                 </p>
               </div>
             </div>
@@ -137,7 +153,7 @@ const TicketManagement = () => {
               <Ticket className="h-4 w-4 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Total</p>
-                <p className="text-2xl font-bold text-blue-600">{tickets.length}</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
               </div>
             </div>
           </CardContent>
