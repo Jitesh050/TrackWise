@@ -19,4 +19,27 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('react') || id.includes('react-dom') || id.includes('react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('firebase')) {
+              return 'vendor-firebase';
+            }
+            if (id.includes('@radix-ui') || id.includes('lucide-react')) {
+              return 'vendor-ui';
+            }
+            if (id.includes('leaflet') || id.includes('react-leaflet')) {
+              return 'vendor-map';
+            }
+            return 'vendor-core';
+          }
+        }
+      }
+    }
+  }
 }));
