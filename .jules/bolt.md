@@ -1,0 +1,3 @@
+## 2024-04-25 - Consolidating Stats Calculations
+**Learning:** A common performance anti-pattern in this codebase is performing multiple `O(N)` array passes (e.g. `array.filter(...).length`) inline in JSX to compute different statistics. Combined with `searchTerm.toLowerCase()` being re-evaluated inside `.filter()` iterations and missing `useMemo`, this causes unnecessary memory allocations and redundant computation on every keystroke.
+**Action:** When computing multiple counts or stats from the same array, consolidate them into a single `O(N)` `.reduce()` pass wrapped in `useMemo`. Always hoist static string transformations like `.toLowerCase()` outside of iteration loops.
