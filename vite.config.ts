@@ -19,4 +19,20 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules')) {
+            if (id.includes('react')) return 'vendor-react';
+            if (id.includes('lucide')) return 'vendor-lucide';
+            if (id.includes('firebase')) return 'vendor-firebase';
+            if (id.includes('mapbox') || id.includes('leaflet')) return 'vendor-map';
+            if (id.includes('radix-ui')) return 'vendor-radix';
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 }));
