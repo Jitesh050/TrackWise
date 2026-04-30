@@ -19,4 +19,19 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('firebase')) return 'firebase';
+            if (id.includes('react')) return 'react-vendor';
+            if (id.includes('lucide-react')) return 'icons';
+            if (id.includes('recharts')) return 'charts';
+            return 'vendor';
+          }
+        }
+      }
+    }
+  }
 }));
