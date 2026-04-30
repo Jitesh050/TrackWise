@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,26 +40,30 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
   // Generate seat layout (simplified coach layout)
-  const generateSeats = () => {
+  const seatsByRow = useMemo(() => {
     const seats = [];
     const rows = ['A', 'B', 'C', 'D', 'E', 'F'];
     for (let row = 1; row <= 20; row++) {
-      for (let seat of rows) {
+      for (const seat of rows) {
         const seatNumber = `${row}${seat}`;
         const isReserved = Math.random() < 0.3; // 30% chance reserved
         const isAvailable = !isReserved;
         seats.push({
           seatNumber,
           isAvailable,
-          isReserved,
-          isSelected: selectedSeats.includes(seatNumber)
+          isReserved
         });
       }
     }
-    return seats;
-  };
 
-  const seats = generateSeats();
+    const grouped: { [key: number]: typeof seats } = {};
+    seats.forEach(seat => {
+      const row = parseInt(seat.seatNumber);
+      if (!grouped[row]) grouped[row] = [];
+      grouped[row].push(seat);
+    });
+    return grouped;
+  }, []);
 
   const handleSeatSelect = (seatNumber: string) => {
     setSelectedSeats(prev => {
@@ -75,18 +79,6 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
       return newSelection;
     });
   };
-
-  const groupSeatsByRow = () => {
-    const grouped: { [key: number]: typeof seats } = {};
-    seats.forEach(seat => {
-      const row = parseInt(seat.seatNumber);
-      if (!grouped[row]) grouped[row] = [];
-      grouped[row].push(seat);
-    });
-    return grouped;
-  };
-
-  const seatsByRow = groupSeatsByRow();
 
   return (
     <div className="flex gap-6">
