@@ -14,6 +14,18 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes("firebase")) return "firebase";
+          if (id.includes("react")) return "vendor-react";
+          if (id.includes("lucide")) return "vendor-lucide";
+          if (id.includes("node_modules")) return "vendor";
+        }
+      }
+    }
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
