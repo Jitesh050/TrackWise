@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,12 +17,7 @@ import {
   Zap
 } from "lucide-react";
 
-const TrainManagement = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-
-  // Mock data - in real app, this would come from API
-  const trains = [
+const TRAINS = [
     {
       id: "1",
       trainNumber: "12345",
@@ -61,13 +56,36 @@ const TrainManagement = () => {
     }
   ];
 
-  const filteredTrains = trains.filter(train => {
-    const matchesSearch = train.trainName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.trainNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.route.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || train.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+const OVERALL_STATS = TRAINS.reduce(
+  (acc, train) => {
+    if (train.status === "Active") acc.active++;
+    else if (train.status === "Maintenance") acc.maintenance++;
+    acc.totalCapacity += train.capacity;
+    acc.totalOccupancy += train.occupancy;
+    return acc;
+  },
+  { active: 0, maintenance: 0, totalCapacity: 0, totalOccupancy: 0 }
+);
+const AVG_OCCUPANCY = TRAINS.length > 0 ? Math.round(OVERALL_STATS.totalOccupancy / TRAINS.length) : 0;
+
+
+const TrainManagement = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+
+  // Mock data - in real app, this would come from API
+
+
+  const filteredTrains = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    return TRAINS.filter(train => {
+      const matchesSearch = train.trainName.toLowerCase().includes(searchLower) ||
+                           train.trainNumber.toLowerCase().includes(searchLower) ||
+                           train.route.toLowerCase().includes(searchLower);
+      const matchesFilter = filterStatus === "all" || train.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
+  }, [searchTerm, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,7 +125,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Trains</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {trains.filter(t => t.status === "Active").length}
+                  {OVERALL_STATS.active}
                 </p>
               </div>
             </div>
@@ -121,7 +139,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Maintenance</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {trains.filter(t => t.status === "Maintenance").length}
+                  {OVERALL_STATS.maintenance}
                 </p>
               </div>
             </div>
@@ -135,7 +153,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Capacity</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {trains.reduce((sum, train) => sum + train.capacity, 0).toLocaleString()}
+                  {OVERALL_STATS.totalCapacity.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -149,7 +167,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg Occupancy</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {Math.round(trains.reduce((sum, train) => sum + train.occupancy, 0) / trains.length)}%
+                  {AVG_OCCUPANCY}%
                 </p>
               </div>
             </div>
