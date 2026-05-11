@@ -5,7 +5,16 @@ const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
+  // Cache to prevent redundant Geoapify/OpenTripMap network calls for the same station coordinates
+  private static attractionCache = new Map<string, TouristSpot[]>();
+
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
+    // Return cached result if we've already queried this location
+    const cacheKey = `${lat},${lon},${radius}`;
+    if (this.attractionCache.has(cacheKey)) {
+      return this.attractionCache.get(cacheKey)!;
+    }
+
     try {
       console.log(`Searching for attractions near lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
       
@@ -47,8 +56,9 @@ export class TouristSpotService {
           googleMapsLink: `https://www.google.com/maps/dir/${lat},${lon}/${feature.geometry.coordinates[1]},${feature.geometry.coordinates[0]}`,
           imageUrl: properties.image_url || undefined
         };
-      }).filter(Boolean); // Remove null entries
+      }).filter(Boolean) as TouristSpot[]; // Remove null entries
       
+      this.attractionCache.set(cacheKey, attractions);
       return attractions;
     } catch (error) {
       console.error('Error fetching tourist attractions:', error);
@@ -143,7 +153,16 @@ export class TouristSpotService {
 
 // Geoapify API service for hotels
 export class HotelService {
+  // Cache to prevent redundant API calls for hotels near the same station coordinates
+  private static hotelCache = new Map<string, Hotel[]>();
+
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
+    // Return cached result to avoid duplicate network roundtrips
+    const cacheKey = `${lat},${lon},${radius}`;
+    if (this.hotelCache.has(cacheKey)) {
+      return this.hotelCache.get(cacheKey)!;
+    }
+
     try {
       const response = await fetch(
         `https://api.geoapify.com/v2/places?categories=accommodation.hotel&filter=circle:${lon},${lat},${radius}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
@@ -176,6 +195,7 @@ export class HotelService {
         };
       });
       
+      this.hotelCache.set(cacheKey, hotels);
       return hotels;
     } catch (error) {
       console.error('Error fetching hotels:', error);
