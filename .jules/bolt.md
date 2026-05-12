@@ -1,0 +1,3 @@
+## 2026-05-12 - [O(N log N) Date Sorting in Render Loop]
+**Learning:** The PassengerDashboard was recalculating `nextJourney` and `milesTraveled` on every render by mapping over dates, sorting them `O(N log N)`, and mapping over the same array multiple times to calculate active bookings. In React apps with real-time or frequently updating hooks (like `useQuery`), this causes severe CPU spikes.
+**Action:** Use a single `forEach` or `reduce` pass inside `useMemo` to track minimums (e.g., closest upcoming timestamp) rather than sorting the whole array. Always hoist static maps like `STATIONS_BY_CODE` outside the component to prevent memory reallocation per render.
