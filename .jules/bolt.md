@@ -1,0 +1,3 @@
+## 2024-05-19 - Consolidating `filter().length` Array Passes
+**Learning:** This codebase frequently calculates stats dynamically using multiple `O(N)` `array.filter(condition).length` chains rendered inline in JSX components (like in `UserManagement.tsx`). Since the parent array is re-created on each render, these iterative passes cause redundant allocations and computations.
+**Action:** Always seek to extract static arrays out of components, pre-calculate derived counts outside using a single `.reduce()` pass, and use `useMemo` for any dynamically filtered state based on user inputs while hoisting expensive inline loop operations like `.toLowerCase()`.
