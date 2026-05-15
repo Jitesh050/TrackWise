@@ -19,23 +19,24 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom') || id.includes('node_modules/react-router')) {
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/') || id.includes('node_modules/react-router/')) {
             return 'vendor-react';
           }
-          if (id.includes('node_modules/firebase')) {
+          if (id.includes('node_modules/firebase/')) {
             return 'vendor-firebase';
           }
-          if (id.includes('node_modules/@radix-ui') || id.includes('node_modules/lucide-react') || id.includes('node_modules/framer-motion')) {
+          if (id.includes('node_modules/@radix-ui/') || id.includes('node_modules/lucide-react/')) {
             return 'vendor-ui';
           }
-          if (id.includes('node_modules/leaflet') || id.includes('node_modules/react-leaflet')) {
+          if (id.includes('node_modules/mapbox-gl/')) {
             return 'vendor-maps';
           }
-          if (id.includes('node_modules/date-fns') || id.includes('node_modules/zod') || id.includes('node_modules/axios')) {
-            return 'vendor-utils';
+          if (id.includes('node_modules/recharts/')) {
+             return 'vendor-charts';
           }
         }
       }
