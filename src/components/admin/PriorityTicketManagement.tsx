@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,17 +76,32 @@ const PriorityTicketManagement = () => {
     }
   };
 
-  const filteredTickets = priorityTickets.filter(ticket => {
-    const matchesFilter = filterType === "all" || ticket.priorityType === filterType;
-    const matchesSearch = ticket.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.trainNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  // BOLT OPTIMIZATION: Consolidate multiple O(N) filters into a single pass and hoist toLowerCase()
+  const { filteredTickets, stats } = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return priorityTickets.reduce(
+      (acc, ticket) => {
+        if (ticket.status === "Pending") acc.stats.pending++;
+        else if (ticket.status === "Approved") acc.stats.approved++;
+        else if (ticket.status === "Rejected") acc.stats.rejected++;
 
-  const pendingTickets = priorityTickets.filter(t => t.status === "Pending");
-  const approvedTickets = priorityTickets.filter(t => t.status === "Approved");
-  const rejectedTickets = priorityTickets.filter(t => t.status === "Rejected");
+        const matchesFilter = filterType === "all" || ticket.priorityType === filterType;
+        const matchesSearch =
+          ticket.passengerName.toLowerCase().includes(lowerSearch) ||
+          ticket.pnr.toLowerCase().includes(lowerSearch) ||
+          ticket.trainNumber.toLowerCase().includes(lowerSearch);
+
+        if (matchesFilter && matchesSearch) {
+          acc.filteredTickets.push(ticket);
+        }
+        return acc;
+      },
+      {
+        filteredTickets: [] as typeof priorityTickets,
+        stats: { pending: 0, approved: 0, rejected: 0 },
+      }
+    );
+  }, [priorityTickets, searchTerm, filterType]);
 
   if (loading) {
     return (
@@ -106,7 +121,7 @@ const PriorityTicketManagement = () => {
               <Clock className="h-4 w-4 text-yellow-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{pendingTickets.length}</p>
+                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
               </div>
             </div>
           </CardContent>
@@ -118,7 +133,7 @@ const PriorityTicketManagement = () => {
               <CheckCircle className="h-4 w-4 text-green-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{approvedTickets.length}</p>
+                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
               </div>
             </div>
           </CardContent>
@@ -130,7 +145,7 @@ const PriorityTicketManagement = () => {
               <XCircle className="h-4 w-4 text-red-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">{rejectedTickets.length}</p>
+                <p className="text-2xl font-bold text-red-600">{stats.rejected}</p>
               </div>
             </div>
           </CardContent>
@@ -170,7 +185,7 @@ const PriorityTicketManagement = () => {
               <select
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={filterType}
-                onChange={(e) => setFilterType(e.target.value as any)}
+                onChange={(e) => setFilterType(e.target.value as "all" | "Student" | "Old-Age" | "Medical")}
               >
                 <option value="all">All Types</option>
                 <option value="Student">Student</option>
