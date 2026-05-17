@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,11 +17,7 @@ import {
   Zap
 } from "lucide-react";
 
-const TrainManagement = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
-
-  // Mock data - in real app, this would come from API
+// Mock data - in real app, this would come from API
   const trains = [
     {
       id: "1",
@@ -60,14 +56,32 @@ const TrainManagement = () => {
       occupancy: 0
     }
   ];
+// ⚡ Bolt: Pre-calculate static stats outside the component to avoid O(N) re-calculation per render
+const OVERALL_STATS = {
+  active: trains.filter(t => t.status === "Active").length,
+  maintenance: trains.filter(t => t.status === "Maintenance").length,
+  capacity: trains.reduce((sum, train) => sum + train.capacity, 0),
+  avgOccupancy: Math.round(trains.reduce((sum, train) => sum + train.occupancy, 0) / trains.length)
+};
 
-  const filteredTrains = trains.filter(train => {
-    const matchesSearch = train.trainName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.trainNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.route.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || train.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+const TrainManagement = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+
+
+
+  // ⚡ Bolt: Memoize filtered trains and hoist string lowercasing outside loop
+  const filteredTrains = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return trains.filter(train => {
+      const matchesFilter = filterStatus === "all" || train.status === filterStatus;
+      if (!matchesFilter) return false;
+      if (!lowerSearch) return true;
+      return train.trainName.toLowerCase().includes(lowerSearch) ||
+             train.trainNumber.toLowerCase().includes(lowerSearch) ||
+             train.route.toLowerCase().includes(lowerSearch);
+    });
+  }, [searchTerm, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,7 +121,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Trains</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {trains.filter(t => t.status === "Active").length}
+                  {OVERALL_STATS.active}
                 </p>
               </div>
             </div>
@@ -121,7 +135,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Maintenance</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {trains.filter(t => t.status === "Maintenance").length}
+                  {OVERALL_STATS.maintenance}
                 </p>
               </div>
             </div>
@@ -135,7 +149,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Capacity</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {trains.reduce((sum, train) => sum + train.capacity, 0).toLocaleString()}
+                  {OVERALL_STATS.capacity.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -149,7 +163,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg Occupancy</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {Math.round(trains.reduce((sum, train) => sum + train.occupancy, 0) / trains.length)}%
+                  {OVERALL_STATS.avgOccupancy}%
                 </p>
               </div>
             </div>
