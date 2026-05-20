@@ -1,0 +1,3 @@
+## 2025-02-12 - Consolidate Multiple Array Filter Passes
+**Learning:** Found multiple instances where components map over or filter an array repeatedly to extract statistics on every render (e.g., `tickets.filter(t => t.status === "Confirmed").length`, followed by `...Waiting`, `...Cancelled`). This is an O(N * M) anti-pattern in React that scales poorly as data sizes grow.
+**Action:** When calculating multiple summary stats for the same array, consolidate them into a single pass using `.reduce()` wrapped in a `useMemo` block. Also hoist static string transformations like `searchTerm.toLowerCase()` outside of `.filter()` loops to avoid redundant allocations on every iteration.
