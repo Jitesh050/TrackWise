@@ -1,0 +1,1 @@
+## 2026-05-22 - [O(N) consolidation via useMemo]\n**Learning:** Consolidating multiple array passes into a single pass using .reduce() and caching the result with useMemo prevents unnecessary recalculations on re-renders.\n**Action:** Look for multiple .filter().length counts on the same array to combine into a single pass reduce block.
