@@ -19,4 +19,37 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // ⚡ Bolt: Chunk splitting improves caching, reduces initial load times, and fixes Vite CI chunk size warnings.
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('node_modules/firebase/auth') || id.includes('node_modules/@firebase/auth')) {
+              return 'vendor-firebase-auth';
+            }
+            if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+              return 'vendor-firebase';
+            }
+            if (id.includes('node_modules/recharts/')) {
+              return 'vendor-recharts';
+            }
+            if (id.includes('node_modules/lucide-react/')) {
+              return 'vendor-lucide';
+            }
+            if (id.includes('node_modules/@radix-ui/')) {
+              return 'vendor-radix';
+            }
+            if (id.includes('node_modules/mapbox-gl/')) {
+              return 'vendor-mapbox';
+            }
+            if (id.includes('node_modules/react-router') || id.includes('node_modules/react-router-dom') || id.includes('node_modules/@remix-run/')) {
+              return 'vendor-router';
+            }
+            return 'vendor'; // Fallback for other node_modules
+          }
+        }
+      }
+    }
+  }
 }));
