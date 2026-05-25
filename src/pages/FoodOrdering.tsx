@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MENU_ITEMS } from '../data/foodMenu';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -94,9 +94,6 @@ const FoodOrdering = () => {
     setLoading(true); // Re-using loading state or we could add a specific submitting state
     
     setTimeout(() => {
-      // Calculate total amount
-      const total = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      
       // Calculate estimated delivery time (15-30 mins mock)
       const baseTime = 15;
       const randomVariance = Math.floor(Math.random() * 15);
@@ -106,7 +103,7 @@ const FoodOrdering = () => {
         id: Date.now().toString(),
         ticketNumber,
         items: [...cart],
-        totalAmount: total,
+        totalAmount: cartTotals.totalAmount,
         status: 'Preparing',
         estimatedTime,
         createdAt: new Date().toISOString()
@@ -120,9 +117,27 @@ const FoodOrdering = () => {
     }, 1500);
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  // ⚡ Bolt: Consolidate multiple O(N) cart.reduce passes into a single pass memoized by cart
+  const cartTotals = useMemo(() => {
+    return cart.reduce((acc, item) => {
+      acc.totalAmount += item.price * item.quantity;
+      acc.totalItems += item.quantity;
+      return acc;
+    }, { totalAmount: 0, totalItems: 0 });
+  }, [cart]);
 
-  const categories = Array.from(new Set(menu.map(item => item.category)));
+  // ⚡ Bolt: Replace O(N*C) nested filter operations with a single O(N) grouping pass memoized by menu
+  const menuByCategory = useMemo(() => {
+    return menu.reduce((acc, item) => {
+      if (!acc[item.category]) {
+        acc[item.category] = [];
+      }
+      acc[item.category].push(item);
+      return acc;
+    }, {} as Record<string, MenuItem[]>);
+  }, [menu]);
+
+  const categories = Object.keys(menuByCategory);
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -156,7 +171,7 @@ const FoodOrdering = () => {
             Cart
             {cart.length > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center p-0 rounded-full">
-                {cart.reduce((acc, item) => acc + item.quantity, 0)}
+                {cartTotals.totalItems}
               </Badge>
             )}
           </TabsTrigger>
@@ -170,7 +185,7 @@ const FoodOrdering = () => {
               <div key={category} className="space-y-4">
                 <h2 className="text-xl font-semibold border-b pb-2">{category}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {menu.filter(item => item.category === category).map(item => (
+                  {menuByCategory[category].map(item => (
                     <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
                       <div className="h-48 bg-gray-100 relative">
                         <img 
@@ -271,7 +286,7 @@ const FoodOrdering = () => {
                 <CardContent className="space-y-2">
                   <div className="flex justify-between text-sm">
                     <span>Subtotal</span>
-                    <span>₹{totalAmount}</span>
+                    <span>₹{cartTotals.totalAmount}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span>Service Charge</span>
@@ -280,7 +295,7 @@ const FoodOrdering = () => {
                   <Separator className="my-2" />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
-                    <span>₹{cart.length > 0 ? totalAmount + 20 : 0}</span>
+                    <span>₹{cart.length > 0 ? cartTotals.totalAmount + 20 : 0}</span>
                   </div>
                 </CardContent>
                 <CardFooter>
