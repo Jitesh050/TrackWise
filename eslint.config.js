@@ -29,7 +29,8 @@ export default tseslint.config(
       "@typescript-eslint/no-require-imports": "off",
       "prefer-const": "off",
       "no-empty": "off",
-      "no-useless-escape": "off"
+      "no-useless-escape": "off",
+      "@typescript-eslint/no-unused-expressions": "off"
     },
   }
 );
