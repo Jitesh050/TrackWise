@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { DashboardCard } from "@/components/ui/dashboard-card";
 import { FeatureSection } from "@/components/ui/feature-section";
@@ -25,6 +25,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ticketsApi, TicketRecord } from "@/lib/tickets";
 import { stations, calculateDistance } from "@/lib/stationData";
 
+// Build quick lookup of station by code outside component to avoid recreation
+const STATIONS_BY_CODE = new Map(stations.map(s => [s.id.toUpperCase(), s]));
+
 const PassengerDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -36,32 +39,40 @@ const PassengerDashboard = () => {
     staleTime: 15_000,
   });
 
-  const activeBookings = tickets.filter(t => t.status === "Confirmed").length;
-  const hasBookings = (tickets || []).length > 0;
-  const latestPnr = hasBookings ? (tickets[0]?.pnr || "") : "";
-  const nextJourney = (() => {
-    const withDate = tickets
-      .map(t => ({ t, time: Date.parse(t.date + (t.departureTime ? " " + t.departureTime : "")) || Date.parse(t.date) }))
-      .filter(x => !isNaN(x.time) && x.time >= Date.now())
-      .sort((a,b) => a.time - b.time);
-    if (withDate.length === 0) return "No upcoming";
-    const d = new Date(withDate[0].time);
-    return d.toLocaleString();
-  })();
-  const milesTraveled = (() => {
-    // Build quick lookup of station by code
-    const byCode = new Map(stations.map(s => [s.id.toUpperCase(), s]));
-    const kmTotal = (tickets || [])
-      .filter(t => t.status === "Confirmed")
-      .reduce((sum, t) => {
-        const from = byCode.get(String(t.from || '').toUpperCase());
-        const to = byCode.get(String(t.to || '').toUpperCase());
-        if (!from || !to) return sum;
-        const km = calculateDistance(from.lat, from.lon, to.lat, to.lon);
-        return sum + km;
-      }, 0);
-    return Math.round(kmTotal * 0.621371); // convert to miles
-  })();
+  // Optimize: Single pass over tickets array and avoid recreation of lookup maps
+  const { activeBookings, hasBookings, latestPnr, nextJourney, milesTraveled } = useMemo(() => {
+    let activeCount = 0;
+    let kmTotal = 0;
+    let minFutureTime = Infinity;
+    const now = Date.now();
+
+    const tks = tickets || [];
+
+    for (const t of tks) {
+      if (t.status === "Confirmed") {
+        activeCount++;
+
+        const from = STATIONS_BY_CODE.get(String(t.from || '').toUpperCase());
+        const to = STATIONS_BY_CODE.get(String(t.to || '').toUpperCase());
+        if (from && to) {
+          kmTotal += calculateDistance(from.lat, from.lon, to.lat, to.lon);
+        }
+      }
+
+      const time = Date.parse(t.date + (t.departureTime ? " " + t.departureTime : "")) || Date.parse(t.date);
+      if (!isNaN(time) && time >= now && time < minFutureTime) {
+        minFutureTime = time;
+      }
+    }
+
+    return {
+      activeBookings: activeCount,
+      hasBookings: tks.length > 0,
+      latestPnr: tks.length > 0 ? (tks[0]?.pnr || "") : "",
+      nextJourney: minFutureTime === Infinity ? "No upcoming" : new Date(minFutureTime).toLocaleString(),
+      milesTraveled: Math.round(kmTotal * 0.621371)
+    };
+  }, [tickets]);
 
   const handleFeatureClick = (route: string) => {
     navigate(route);
