@@ -1,0 +1,3 @@
+## 2024-05-30 - [Performance] Build Warnings block CI
+**Learning:** In projects deployed on strict CI/CD platforms like Netlify, build warnings (such as ESLint's `unused eslint-disable` directive or `prefer-const` warnings) can cause the linting script to exit with code 1. This completely blocks the deployment.
+**Action:** When a PR fails CI due to linting warnings, prioritize resolving the specific warnings causing the exit code failure. Do NOT mask them by globally disabling rules in `eslint.config.js` if you can safely fix the underlying code (e.g., removing unused directives or converting `let` to `const`).
