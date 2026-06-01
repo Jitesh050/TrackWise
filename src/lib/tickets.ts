@@ -28,7 +28,7 @@ function readLS(): TicketRecord[] {
   try {
     const raw = localStorage.getItem(LS_KEY);
     return raw ? (JSON.parse(raw) as TicketRecord[]) : [];
-  } catch {
+  } catch (error) {
     return [];
   }
 }
@@ -36,7 +36,7 @@ function readLS(): TicketRecord[] {
 function writeLS(tickets: TicketRecord[]) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(tickets));
-  } catch {}
+  } catch (error) { console.error(error); }
 }
 
 export const ticketsApi = {
@@ -50,7 +50,7 @@ export const ticketsApi = {
         userEmail,
         created_at: serverTimestamp(),
       });
-    } catch {
+    } catch (error) {
       const current = readLS();
       writeLS([ticket, ...current]);
     }
@@ -99,7 +99,7 @@ export const ticketsApi = {
       items.sort((a, b) => String(b.created_at || '').localeCompare(String(a.created_at || '')));
       writeLS(items);
       return items;
-    } catch {
+    } catch (error) {
       return readLS();
     }
   },

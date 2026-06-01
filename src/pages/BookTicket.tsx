@@ -84,7 +84,7 @@ const BookTicket = () => {
       // Refresh any tickets-related queries so dashboards/lists update immediately
       await queryClient.invalidateQueries({ queryKey: ["tickets"] });
       await queryClient.invalidateQueries({ queryKey: ["tickets", "dashboard"] });
-    } catch {}
+    } catch (error) { console.error(error); }
     setBookingComplete(true);
     setStep(5);
   };
