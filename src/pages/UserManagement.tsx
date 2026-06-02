@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,54 +18,68 @@ import {
   Activity
 } from "lucide-react";
 
+// Mock data - in real app, this would come from API
+const USERS = [
+  {
+    id: "1",
+    name: "John Doe",
+    email: "john.doe@example.com",
+    phone: "+91 98765 43210",
+    role: "user",
+    status: "active",
+    joinDate: "2024-01-15",
+    lastLogin: "2024-01-20 14:30",
+    totalBookings: 12
+  },
+  {
+    id: "2",
+    name: "Jane Smith",
+    email: "jane.smith@example.com",
+    phone: "+91 98765 43211",
+    role: "admin",
+    status: "active",
+    joinDate: "2024-01-10",
+    lastLogin: "2024-01-20 16:45",
+    totalBookings: 0
+  },
+  {
+    id: "3",
+    name: "Mike Johnson",
+    email: "mike.johnson@example.com",
+    phone: "+91 98765 43212",
+    role: "user",
+    status: "inactive",
+    joinDate: "2024-01-05",
+    lastLogin: "2024-01-15 09:20",
+    totalBookings: 5
+  }
+];
+
+const USER_STATS = USERS.reduce(
+  (acc, user) => {
+    acc.total++;
+    if (user.role === "admin") acc.admins++;
+    if (user.role === "user") acc.regular++;
+    if (user.status === "active") acc.active++;
+    return acc;
+  },
+  { total: 0, admins: 0, regular: 0, active: 0 }
+);
+
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [filterRole, setFilterRole] = useState("all");
+  const [filterRole, setFilterRole] = useState<"all" | "admin" | "user">("all");
 
-  // Mock data - in real app, this would come from API
-  const users = [
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "+91 98765 43210",
-      role: "user",
-      status: "active",
-      joinDate: "2024-01-15",
-      lastLogin: "2024-01-20 14:30",
-      totalBookings: 12
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      phone: "+91 98765 43211",
-      role: "admin",
-      status: "active",
-      joinDate: "2024-01-10",
-      lastLogin: "2024-01-20 16:45",
-      totalBookings: 0
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike.johnson@example.com",
-      phone: "+91 98765 43212",
-      role: "user",
-      status: "inactive",
-      joinDate: "2024-01-05",
-      lastLogin: "2024-01-15 09:20",
-      totalBookings: 5
-    }
-  ];
-
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone.includes(searchTerm);
-    const matchesFilter = filterRole === "all" || user.role === filterRole;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredUsers = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return USERS.filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(term) ||
+                           user.email.toLowerCase().includes(term) ||
+                           user.phone.includes(searchTerm);
+      const matchesFilter = filterRole === "all" || user.role === filterRole;
+      return matchesSearch && matchesFilter;
+    });
+  }, [searchTerm, filterRole]);
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -113,7 +127,7 @@ const UserManagement = () => {
               <Users className="h-4 w-4 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-blue-600">{users.length}</p>
+                <p className="text-2xl font-bold text-blue-600">{USER_STATS.total}</p>
               </div>
             </div>
           </CardContent>
@@ -125,9 +139,7 @@ const UserManagement = () => {
               <Shield className="h-4 w-4 text-purple-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Admins</p>
-                <p className="text-2xl font-bold text-purple-600">
-                  {users.filter(u => u.role === "admin").length}
-                </p>
+                <p className="text-2xl font-bold text-purple-600">{USER_STATS.admins}</p>
               </div>
             </div>
           </CardContent>
@@ -139,9 +151,7 @@ const UserManagement = () => {
               <Activity className="h-4 w-4 text-green-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Users</p>
-                <p className="text-2xl font-bold text-green-600">
-                  {users.filter(u => u.status === "active").length}
-                </p>
+                <p className="text-2xl font-bold text-green-600">{USER_STATS.active}</p>
               </div>
             </div>
           </CardContent>
@@ -153,9 +163,7 @@ const UserManagement = () => {
               <User className="h-4 w-4 text-orange-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Regular Users</p>
-                <p className="text-2xl font-bold text-orange-600">
-                  {users.filter(u => u.role === "user").length}
-                </p>
+                <p className="text-2xl font-bold text-orange-600">{USER_STATS.regular}</p>
               </div>
             </div>
           </CardContent>
@@ -182,7 +190,7 @@ const UserManagement = () => {
               <select
                 className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={filterRole}
-                onChange={(e) => setFilterRole(e.target.value)}
+                onChange={(e) => setFilterRole(e.target.value as "all" | "admin" | "user")}
               >
                 <option value="all">All Roles</option>
                 <option value="admin">Admin</option>

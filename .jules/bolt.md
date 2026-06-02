@@ -1,0 +1,3 @@
+## 2024-05-19 - [O(N) to O(1) in React Render Cycle]
+**Learning:** Even simple iterative `.filter().length` passes inside a component render loop can be problematic if repeated over the same array multiple times (e.g. for generating stats dashboards), and caching this via a single `.reduce()` or moving the array entirely out of the component scope drastically avoids re-allocating memory and multiple iterations on every render.
+**Action:** Always inspect `.filter().length` chaining inside components that produce static or rarely-changing metrics; optimize them into a single `.reduce` and hoist them out of the component if the base array is static.
