@@ -19,4 +19,32 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // ⚡ Bolt: Split heavy dependencies into separate chunks to resolve Vite chunk size
+        // warnings, prevent dynamic/static import conflicts, and improve browser caching.
+        manualChunks(id) {
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+            return 'vendor-firebase';
+          }
+          if (id.includes('node_modules/recharts/')) {
+            return 'vendor-recharts';
+          }
+          if (id.includes('node_modules/mapbox-gl/')) {
+            return 'vendor-mapbox';
+          }
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'vendor-radix';
+          }
+          if (id.includes('node_modules/lucide-react/')) {
+            return 'vendor-lucide';
+          }
+          if (id.includes('node_modules/react-router/') || id.includes('node_modules/react-router-dom/')) {
+            return 'vendor-router';
+          }
+        }
+      }
+    }
+  }
 }));
