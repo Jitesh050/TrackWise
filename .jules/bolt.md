@@ -1,0 +1,3 @@
+## 2024-06-06 - [TrainStatus array optimization]
+**Learning:** React state (`filteredTrains`) was being used inside a `useEffect` to derive state from a prop (`trains`). This is an anti-pattern that leads to unnecessary double-renders. Furthermore, iterating over arrays using chained `.map().filter().filter()` incurs multiple allocations and N-pass traversals.
+**Action:** When finding chained array operations inside `useEffect`, always replace them with a single `useMemo` using `.reduce()`. It prevents double rendering, runs in a single O(N) pass, and prevents unnecessary allocations. Also, move static helper functions (like `mapStatusToCard`) outside the component to avoid recreation on every render.
