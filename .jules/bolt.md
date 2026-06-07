@@ -1,0 +1,3 @@
+## 2026-06-07 - [Build Chunk Optimization]
+**Learning:** Netlify CI fails on Vite dynamic import conflicts and chunk size warnings. While the build still completes, these warnings act as fatal errors in strict CI environments.
+**Action:** Configure `build.rollupOptions.output.manualChunks` in `vite.config.ts` to split heavy vendors (like Firebase, recharts, mapbox-gl, lucide-react) into separate chunks. Note: Since the project uses pnpm/npm workspace linking, module paths might contain standard `node_modules` structures. String splitting based on module ID fixes the chunk warnings and allows CI to pass.
