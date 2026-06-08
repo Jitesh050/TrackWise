@@ -71,6 +71,15 @@ const STATION_NAME_MAP: Record<string, string> = (() => {
 
 const getStationName = (id: string): string => STATION_NAME_MAP[id] || id
 
+// Pre-group schedules by train to avoid O(N*M) lookups
+const SCHEDULES_BY_TRAIN: Record<string, ScheduleRecord[]> = {}
+SCHEDULES_DATA.forEach((s) => {
+  if (!SCHEDULES_BY_TRAIN[s.train_no]) {
+    SCHEDULES_BY_TRAIN[s.train_no] = []
+  }
+  SCHEDULES_BY_TRAIN[s.train_no].push(s)
+})
+
 // Base simulation clock at a fixed local time for consistency
 const getSimBaseNow = (): Date => {
   const d = new Date()
@@ -84,7 +93,10 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
 
   TRAINS_DATA.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
+    // ⚡ Bolt Performance Optimization:
+    // O(1) map lookup instead of O(N) array filtering.
+    // This removes the O(N*M) nested loop bottleneck and substantially speeds up live status generation.
+    const trainSchedules = SCHEDULES_BY_TRAIN[trainNo] || []
     if (trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
@@ -96,7 +108,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     let delay = 0
     let nextStation = ''
     let currentDeparture = sourceStation.departure
-    let currentArrival = destStation.arrival
+    const currentArrival = destStation.arrival
     const platform = (parseInt(trainNo.slice(-1)) % 10) + 1
 
     let currentLegIndex = -1
