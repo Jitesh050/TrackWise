@@ -1,0 +1,3 @@
+## $(date +%Y-%m-%d) - [AIStationManagement.tsx] Consolidate array transforms & cache string ops
+**Learning:** The `handleAnnounceArrivals` function in `AIStationManagement.tsx` had a chain of array operations (`.map().map().filter().sort().slice()`) that caused redundant object creation and array iterations per station update. Wrapping derived arrays in `useMemo` and hoisting evaluations such as `filter.toLowerCase()` significantly mitigates render overhead.
+**Action:** Replaced chained array manipulations with a single-pass loop and hoisted/memoized computations to reduce overall render time.
