@@ -1,0 +1,3 @@
+## 2024-11-20 - [Vite Manual Chunks for Performance]
+**Learning:** This codebase's Netlify CI deployment fails if Vite build warnings, such as chunk size limits or dynamic import conflicts, are present. Resolving these warnings by aggressively splitting large dependencies (e.g., `firebase`, `@radix-ui`, `lucide-react`) into distinct chunks not only speeds up the build and improves caching, but is fundamentally required to pass CI.
+**Action:** When working on performance optimizations that involve bundling, always configure `build.rollupOptions.output.manualChunks` in `vite.config.ts` to properly chunk large libraries. Make sure `bun run build` completes with zero warnings (informational messages like outdated browserslist DB are fine).
