@@ -1,3 +1,0 @@
-## 2024-05-18 - [Fix Vite Build Warnings]
-**Learning:** In projects deployed via Netlify CI, Vite build warnings about chunk size limits (>500kB) and dynamic import conflicts are treated as fatal errors, failing the "Pages changed" and "Header rules" steps. If a task asks to fix CI failures with these exact symptoms without an obvious trace, ensure `vite.config.ts` incorporates Rollup's `manualChunks` to split heavy `node_modules` (like Firebase, React, and Radix UI).
-**Action:** When seeing Netlify deploy failures, always verify `npm run build` outputs zero Vite terminal warnings. Apply chunk splitting targetting the problem dependencies to bypass these limits.
