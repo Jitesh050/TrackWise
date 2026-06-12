@@ -1,0 +1,3 @@
+## 2024-05-18 - [Optimize `PassengerDashboard` Calculations]
+**Learning:** React components sometimes re-evaluate costly operations like Map creations and arrays sorting on each render simply because derived state logic isn't wrapped in `useMemo`. When you need to iterate an array multiple times to derive separate stats, it is highly efficient to perform a single iteration and manually calculate your aggregate properties.
+**Action:** Consolidate multiple iterative array passes and hoist static Map variables out of React components. Apply this optimization specifically to Dashboard-type views where a lot of independent calculations might occur.
