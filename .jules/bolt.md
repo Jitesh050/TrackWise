@@ -1,3 +1,3 @@
-## 2024-05-18 - [Optimize Vite Config Chunking]
-**Learning:** Netlify CI enforces strict limits on chunk sizes and correctly errors out on dynamically loaded chunks that overlap statically imported dependencies. You must use Rollup's manualChunks to aggressively separate heavy vendor dependencies (like Firebase Auth vs Firebase Core) into independent chunks to pass Netlify build steps and maximize browser caching efficiency.
-**Action:** Always verify 'npm run build' generates zero Vite terminal warnings when making any application changes in projects deployed via Netlify. Apply manualChunks specifically targeted at node_modules.
+## 2024-05-18 - [Fix Vite Build Warnings]
+**Learning:** In projects deployed via Netlify CI, Vite build warnings about chunk size limits (>500kB) and dynamic import conflicts are treated as fatal errors, failing the "Pages changed" and "Header rules" steps. If a task asks to fix CI failures with these exact symptoms without an obvious trace, ensure `vite.config.ts` incorporates Rollup's `manualChunks` to split heavy `node_modules` (like Firebase, React, and Radix UI).
+**Action:** When seeing Netlify deploy failures, always verify `npm run build` outputs zero Vite terminal warnings. Apply chunk splitting targetting the problem dependencies to bypass these limits.
