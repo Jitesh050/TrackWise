@@ -1,3 +1,3 @@
-## 2024-05-18 - [Optimize `PassengerDashboard` Calculations]
-**Learning:** React components sometimes re-evaluate costly operations like Map creations and arrays sorting on each render simply because derived state logic isn't wrapped in `useMemo`. When you need to iterate an array multiple times to derive separate stats, it is highly efficient to perform a single iteration and manually calculate your aggregate properties.
-**Action:** Consolidate multiple iterative array passes and hoist static Map variables out of React components. Apply this optimization specifically to Dashboard-type views where a lot of independent calculations might occur.
+## 2024-05-18 - [Optimize Vite Config Chunking]
+**Learning:** Netlify CI enforces strict limits on chunk sizes and correctly errors out on dynamically loaded chunks that overlap statically imported dependencies. You must use Rollup's manualChunks to aggressively separate heavy vendor dependencies (like Firebase Auth vs Firebase Core) into independent chunks to pass Netlify build steps and maximize browser caching efficiency.
+**Action:** Always verify 'npm run build' generates zero Vite terminal warnings when making any application changes in projects deployed via Netlify. Apply manualChunks specifically targeted at node_modules.
