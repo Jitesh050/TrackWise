@@ -29,7 +29,7 @@ const TrainStatus = () => {
     if (s.includes("delay")) return "delayed";
     return "ontime";
   };
-  
+
   // Filter trains from hook based on search and active tab
   useEffect(() => {
     const list = (trains || []).map((t: any) => ({
