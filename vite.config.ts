@@ -19,4 +19,24 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Bolt Optimization: Aggressively code-split vendor dependencies to reduce chunk sizes and avoid Netlify CI build failures.
+        manualChunks: (id) => {
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+            if (id.includes('/auth/')) return 'vendor-firebase-auth';
+            if (id.includes('/database/')) return 'vendor-firebase-db';
+            if (id.includes('/firestore/')) return 'vendor-firebase-firestore';
+            return 'vendor-firebase-core';
+          }
+          if (id.includes('node_modules/recharts/')) return 'vendor-recharts';
+          if (id.includes('node_modules/mapbox-gl/')) return 'vendor-mapbox';
+          if (id.includes('node_modules/@radix-ui/')) return 'vendor-radix';
+          if (id.includes('node_modules/lucide-react/')) return 'vendor-lucide';
+          if (id.includes('node_modules/react-router')) return 'vendor-react-router';
+        }
+      }
+    }
+  }
 }));

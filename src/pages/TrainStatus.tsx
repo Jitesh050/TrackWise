@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -9,16 +9,9 @@ import { Search, Filter, ArrowRight } from "lucide-react";
 import TrainStatusCard from "@/components/TrainStatusCard";
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 
-const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-  const s = (status || "").toLowerCase();
-  if (s.includes("cancel")) return "cancelled";
-  if (s.includes("board")) return "boarding";
-  if (s.includes("delay")) return "delayed";
-  return "ontime";
-};
-
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
   const [params] = useSearchParams();
@@ -29,45 +22,46 @@ const TrainStatus = () => {
     if (q) setSearchQuery(q);
   }, [params]);
 
+  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+    const s = (status || "").toLowerCase();
+    if (s.includes("cancel")) return "cancelled";
+    if (s.includes("board")) return "boarding";
+    if (s.includes("delay")) return "delayed";
+    return "ontime";
+  };
+
   // Filter trains from hook based on search and active tab
-  const filteredTrains = useMemo(() => {
+  useEffect(() => {
+    const list = (trains || []).map((t: any) => ({
+      id: String(t.id),
+      trainNumber: String(t.id),
+      trainName: String(t.name || ""),
+      origin: String(t.from || ""),
+      destination: String(t.to || ""),
+      departureTime: String(t.departure || "-"),
+      arrivalTime: String(t.arrival || "-"),
+      status: mapStatusToCard(t.status),
+      delay: typeof t.delay === 'number' ? t.delay : undefined,
+      platform: t.platform ? String(t.platform) : undefined,
+      progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
+      nextStation: t.nextStation,
+    }));
+
     const query = searchQuery.toLowerCase();
+    let results = list.filter((train) =>
+      !query ||
+      train.trainNumber.toLowerCase().includes(query) ||
+      train.trainName.toLowerCase().includes(query) ||
+      train.origin.toLowerCase().includes(query) ||
+      train.destination.toLowerCase().includes(query)
+    );
 
-    return (trains || []).reduce((acc: any[], t: any) => {
-      const cardStatus = mapStatusToCard(t.status);
+    if (activeTab !== "all") {
+      results = results.filter((train) => train.status === activeTab);
+    }
 
-      if (activeTab !== "all" && cardStatus !== activeTab) return acc;
-
-      const trainNumber = String(t.id);
-      const trainName = String(t.name || "");
-      const origin = String(t.from || "");
-      const destination = String(t.to || "");
-
-      if (query && !trainNumber.toLowerCase().includes(query) &&
-          !trainName.toLowerCase().includes(query) &&
-          !origin.toLowerCase().includes(query) &&
-          !destination.toLowerCase().includes(query)) {
-        return acc;
-      }
-
-      acc.push({
-        id: trainNumber,
-        trainNumber,
-        trainName,
-        origin,
-        destination,
-        departureTime: String(t.departure || "-"),
-        arrivalTime: String(t.arrival || "-"),
-        status: cardStatus,
-        delay: typeof t.delay === 'number' ? t.delay : undefined,
-        platform: t.platform ? String(t.platform) : undefined,
-        progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
-        nextStation: t.nextStation,
-      });
-
-      return acc;
-    }, []);
-  }, [trains, searchQuery, activeTab]);
+    setFilteredTrains(results);
+  }, [searchQuery, activeTab, trains]);
   
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();

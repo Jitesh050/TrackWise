@@ -1,3 +1,0 @@
-## 2025-02-14 - Pre-grouping SCHEDULES_DATA
-**Learning:** Found an expensive nested loop pattern in `src/hooks/useTrainStatus.tsx` where an `O(N*M)` array filtering `SCHEDULES_DATA.filter((s) => s.train_no === trainNo)` runs multiple times during simulation updates. A similar pattern was seen in memory for `CollisionDetection.tsx`.
-**Action:** The memory constraint "To resolve performance bottlenecks in src/hooks/useTrainStatus.tsx, replace the expensive O(N*M) nested array filtering (SCHEDULES_DATA.filter) with an O(1) Map lookup (SCHEDULES_BY_TRAIN)" explicitly directs this optimization. I will apply this exact fix to `useTrainStatus.tsx`.
