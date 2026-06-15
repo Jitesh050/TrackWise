@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { MENU_ITEMS } from '../data/foodMenu';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -120,9 +120,31 @@ const FoodOrdering = () => {
     }, 1500);
   };
 
-  const totalAmount = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  // ⚡ Bolt: Single pass O(N) calculation for cart stats
+  const { totalAmount, totalItems } = useMemo(() => {
+    return cart.reduce((acc, item) => {
+      acc.totalAmount += item.price * item.quantity;
+      acc.totalItems += item.quantity;
+      return acc;
+    }, { totalAmount: 0, totalItems: 0 });
+  }, [cart]);
 
-  const categories = Array.from(new Set(menu.map(item => item.category)));
+  // ⚡ Bolt: O(N) single pass grouping instead of O(N * C) nested filtering inside render
+  const { categories, menuByCategory } = useMemo(() => {
+    const cats = new Set<string>();
+    const byCat: Record<string, MenuItem[]> = {};
+
+    menu.forEach(item => {
+      cats.add(item.category);
+      if (!byCat[item.category]) byCat[item.category] = [];
+      byCat[item.category].push(item);
+    });
+
+    return {
+      categories: Array.from(cats),
+      menuByCategory: byCat
+    };
+  }, [menu]);
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -156,7 +178,7 @@ const FoodOrdering = () => {
             Cart
             {cart.length > 0 && (
               <Badge variant="destructive" className="ml-2 h-5 w-5 flex items-center justify-center p-0 rounded-full">
-                {cart.reduce((acc, item) => acc + item.quantity, 0)}
+                {totalItems}
               </Badge>
             )}
           </TabsTrigger>
@@ -170,7 +192,7 @@ const FoodOrdering = () => {
               <div key={category} className="space-y-4">
                 <h2 className="text-xl font-semibold border-b pb-2">{category}</h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {menu.filter(item => item.category === category).map(item => (
+                  {menuByCategory[category]?.map(item => (
                     <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow">
                       <div className="h-48 bg-gray-100 relative">
                         <img 
