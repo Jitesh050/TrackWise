@@ -3,9 +3,19 @@ import { Station, TouristSpot, Hotel } from './stationData';
 const OPENTRIPMAP_API_KEY = '5ae2e3f221c38a28845f05b6b3fa1b0ebc61af498e582315f53ae35d';
 const GEOAPIFY_API_KEY = 'ee9fee55c12246cbb74d6f7c663cf595';
 
+// In-memory cache for API results
+const attractionCache = new Map<string, TouristSpot[]>();
+const hotelCache = new Map<string, Hotel[]>();
+
 // Geoapify API service for tourist attractions
 export class TouristSpotService {
   static async getNearbyAttractions(lat: number, lon: number, radius: number = 25000): Promise<TouristSpot[]> {
+    const cacheKey = `${lat},${lon},${radius}`;
+    if (attractionCache.has(cacheKey)) {
+      console.log(`Returning cached attractions for lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
+      return attractionCache.get(cacheKey) || [];
+    }
+
     try {
       console.log(`Searching for attractions near lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
       
@@ -49,7 +59,11 @@ export class TouristSpotService {
         };
       }).filter(Boolean); // Remove null entries
       
-      return attractions;
+      // ⚡ Bolt Performance Optimization:
+      // Cache the fetched attractions to avoid redundant Geoapify network requests
+      // for previously queried station coordinates.
+      attractionCache.set(cacheKey, attractions as TouristSpot[]);
+      return attractions as TouristSpot[];
     } catch (error) {
       console.error('Error fetching tourist attractions:', error);
       return [];
@@ -144,6 +158,12 @@ export class TouristSpotService {
 // Geoapify API service for hotels
 export class HotelService {
   static async getNearbyHotels(lat: number, lon: number, radius: number = 5000): Promise<Hotel[]> {
+    const cacheKey = `${lat},${lon},${radius}`;
+    if (hotelCache.has(cacheKey)) {
+      console.log(`Returning cached hotels for lat: ${lat}, lon: ${lon}, radius: ${radius}m`);
+      return hotelCache.get(cacheKey) || [];
+    }
+
     try {
       const response = await fetch(
         `https://api.geoapify.com/v2/places?categories=accommodation.hotel&filter=circle:${lon},${lat},${radius}&limit=5&apiKey=${GEOAPIFY_API_KEY}`
@@ -176,6 +196,10 @@ export class HotelService {
         };
       });
       
+      // ⚡ Bolt Performance Optimization:
+      // Cache the fetched hotels to avoid redundant Geoapify network requests
+      // for previously queried station coordinates.
+      hotelCache.set(cacheKey, hotels);
       return hotels;
     } catch (error) {
       console.error('Error fetching hotels:', error);
