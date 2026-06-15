@@ -19,4 +19,32 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // ⚡ Bolt: Global build optimization - separate heavy dependencies into vendor chunks
+  // This reduces the main chunk size to <500kB, improves cacheability, and resolves Vite build warnings that crash Netlify CI.
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+            return 'vendor-firebase';
+          }
+          if (id.includes('node_modules/lucide-react/')) {
+            return 'vendor-lucide';
+          }
+          if (id.includes('node_modules/recharts/')) {
+            return 'vendor-recharts';
+          }
+          if (id.includes('node_modules/mapbox-gl/')) {
+            return 'vendor-mapbox';
+          }
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'vendor-radix';
+          }
+          if (id.includes('node_modules/react-router/') || id.includes('node_modules/react-router-dom/')) {
+            return 'vendor-router';
+          }
+        }
+      }
+    }
+  }
 }));
