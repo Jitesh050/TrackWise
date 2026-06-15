@@ -31,6 +31,7 @@ const LiveTrainStatus = () => {
   };
 
   const query = searchTrain.trim().toLowerCase();
+
   const filteredTrains = (trains || []).filter((t: any) => {
     const matchesQuery = !query ||
       String(t.id).toLowerCase().includes(query) ||
@@ -49,9 +50,13 @@ const LiveTrainStatus = () => {
     setIsSearching(false);
   };
 
+
   const setOnTime = (t: any) => updateTrainStatus(String(t.id), 'On Time', 0, t.nextStation);
+
   const setBoarding = (t: any) => updateTrainStatus(String(t.id), 'Boarding', 0, t.nextStation);
+
   const setCancelled = (t: any) => updateTrainStatus(String(t.id), 'Cancelled', 0, t.nextStation);
+
   const addDelay5 = (t: any) => {
     const current = typeof t.delay === 'number' ? t.delay : 0;
     updateTrainStatus(String(t.id), 'Delayed', current + 5, t.nextStation);
