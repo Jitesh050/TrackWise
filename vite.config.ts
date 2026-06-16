@@ -14,6 +14,40 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === 'development' && componentTagger(),
   ].filter(Boolean),
+
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules/firebase/')) {
+            return 'vendor-firebase';
+          }
+          if (id.includes('node_modules/@firebase/')) {
+            return 'vendor-firebase-core';
+          }
+          if (id.includes('node_modules/recharts/')) {
+            return 'vendor-recharts';
+          }
+          if (id.includes('node_modules/mapbox-gl/')) {
+            return 'vendor-mapbox';
+          }
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'vendor-radix';
+          }
+          if (id.includes('node_modules/lucide-react/')) {
+            return 'vendor-lucide';
+          }
+          if (id.includes('node_modules/react-router/')) {
+            return 'vendor-router';
+          }
+          if (id.includes('node_modules/')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
