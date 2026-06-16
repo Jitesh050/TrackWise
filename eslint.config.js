@@ -30,6 +30,7 @@ export default tseslint.config(
       "no-empty": "off",
       "prefer-const": "off",
       "@typescript-eslint/no-require-imports": "off",
+      "@typescript-eslint/no-unused-expressions": "off",
     },
   }
 );
