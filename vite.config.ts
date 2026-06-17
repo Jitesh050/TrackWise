@@ -11,6 +11,7 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   build: {
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         // ⚡ Bolt Optimization: Aggressively separate heavy dependencies into distinct vendor chunks.
@@ -27,6 +28,10 @@ export default defineConfig(({ mode }) => ({
           if (id.includes('node_modules/lucide-react/')) return 'vendor-lucide';
           if (id.includes('node_modules/react-router/') || id.includes('node_modules/react-router-dom/')) return 'vendor-react-router';
           if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) return 'vendor-react';
+          if (id.includes('node_modules/date-fns/')) return 'vendor-date-fns';
+          if (id.includes('node_modules/@tanstack/react-query/')) return 'vendor-react-query';
+          if (id.includes('node_modules/zod/')) return 'vendor-zod';
+          if (id.includes('node_modules/react-hook-form/')) return 'vendor-react-hook-form';
         }
       }
     }
