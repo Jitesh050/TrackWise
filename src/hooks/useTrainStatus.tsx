@@ -78,13 +78,21 @@ const getSimBaseNow = (): Date => {
   return d
 }
 
+// Optimization: Pre-group schedules by train_no to replace O(N*M) lookup with O(1) Map get
+const SCHEDULES_BY_TRAIN = new Map<string, ScheduleRecord[]>()
+SCHEDULES_DATA.forEach((s) => {
+  const arr = SCHEDULES_BY_TRAIN.get(s.train_no) || []
+  arr.push(s)
+  SCHEDULES_BY_TRAIN.set(s.train_no, arr)
+})
+
 const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
   const data: TrainStatusItem[] = []
   const currentTime = now.getTime()
 
   TRAINS_DATA.forEach((train) => {
     const trainNo = train.train_no
-    const trainSchedules = SCHEDULES_DATA.filter((s) => s.train_no === trainNo)
+    const trainSchedules = SCHEDULES_BY_TRAIN.get(trainNo) || []
     if (trainSchedules.length < 2) return
 
     const sourceStation = trainSchedules[0]
@@ -96,7 +104,7 @@ const generateLiveStatus = (now: Date = new Date()): TrainStatusItem[] => {
     let delay = 0
     let nextStation = ''
     let currentDeparture = sourceStation.departure
-    let currentArrival = destStation.arrival
+    const currentArrival = destStation.arrival
     const platform = (parseInt(trainNo.slice(-1)) % 10) + 1
 
     let currentLegIndex = -1
