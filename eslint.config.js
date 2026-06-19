@@ -18,17 +18,17 @@ export default tseslint.config(
       "react-refresh": reactRefresh,
     },
     rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "no-empty": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "no-useless-escape": "off",
+      "@typescript-eslint/no-require-imports": "off",
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": [
         "warn",
         { allowConstantExport: true },
       ],
       "@typescript-eslint/no-unused-vars": "off",
-      "@typescript-eslint/no-explicit-any": "off",
-      "no-empty": "off",
-      "@typescript-eslint/no-empty-object-type": "off",
-      "no-useless-escape": "off",
-      "@typescript-eslint/no-require-imports": "off",
     },
   }
 );
