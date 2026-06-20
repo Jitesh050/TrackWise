@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,14 @@ import { useSearchParams } from "react-router-dom";
 
 import { useTrainStatus } from "@/hooks/useTrainStatus";
 import TrainStatusCard from "@/components/TrainStatusCard";
+
+const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
+  const s = (status || "").toLowerCase();
+  if (s.includes("cancel")) return "cancelled";
+  if (s.includes("board")) return "boarding";
+  if (s.includes("delay")) return "delayed";
+  return "ontime";
+};
 
 const LiveTrainStatus = () => {
   const [searchTrain, setSearchTrain] = useState("");
@@ -22,25 +30,26 @@ const LiveTrainStatus = () => {
     if (q) setSearchTrain(q);
   }, [params]);
 
-  const mapStatusToCard = (status: string): "ontime" | "delayed" | "cancelled" | "boarding" => {
-    const s = (status || "").toLowerCase();
-    if (s.includes("cancel")) return "cancelled";
-    if (s.includes("board")) return "boarding";
-    if (s.includes("delay")) return "delayed";
-    return "ontime";
-  };
+  // Memoize filtered trains to prevent recalculating on every render.
+  // Optimization: Moved mapStatusToCard outside the component and wrapped filtering in useMemo.
+  const filteredTrains = useMemo(() => {
+    const query = searchTrain.trim().toLowerCase();
 
-  const query = searchTrain.trim().toLowerCase();
-  const filteredTrains = (trains || []).filter((t: any) => {
-    const matchesQuery = !query ||
-      String(t.id).toLowerCase().includes(query) ||
-      String(t.name || "").toLowerCase().includes(query) ||
-      String(t.from || "").toLowerCase().includes(query) ||
-      String(t.to || "").toLowerCase().includes(query);
-    const cardStatus = mapStatusToCard(t.status);
-    const matchesFilter = filter === "all" || cardStatus === filter;
-    return matchesQuery && matchesFilter;
-  });
+    // Short circuit for early returns
+    return (trains || []).filter((t: any) => {
+      // If there's a query, check if it matches
+      const matchesQuery = !query ||
+        String(t.id).toLowerCase().includes(query) ||
+        String(t.name || "").toLowerCase().includes(query) ||
+        String(t.from || "").toLowerCase().includes(query) ||
+        String(t.to || "").toLowerCase().includes(query);
+
+      if (!matchesQuery) return false;
+
+      const cardStatus = mapStatusToCard(t.status);
+      return filter === "all" || cardStatus === filter;
+    });
+  }, [searchTrain, trains, filter]);
 
   const handleSearch = async () => {
     // keep a tiny debounce to avoid spamming state
