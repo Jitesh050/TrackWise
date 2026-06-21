@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { X, AlertTriangle, Clock } from "lucide-react";
@@ -6,7 +7,13 @@ import { useTrainStatus } from "@/hooks/useTrainStatus";
 const AnnouncementBanner = () => {
   const { trains } = useTrainStatus();
 
-  const delayed = (trains || []).filter((t: any) => String(t.status).toLowerCase().includes('delay'));
+  // 💡 What: Wrapped delayed trains filtering in useMemo
+  // 🎯 Why: Prevents redundant O(N) array filtering on every component re-render
+  // 📊 Impact: Reduces CPU cycle waste when the banner re-renders (e.g. from state changes like hover or parent re-renders)
+  const delayed = useMemo(
+    () => (trains || []).filter((t: any) => String(t.status).toLowerCase().includes('delay')),
+    [trains]
+  );
   if (delayed.length === 0) return null;
 
   const title = 'Service Delays';
