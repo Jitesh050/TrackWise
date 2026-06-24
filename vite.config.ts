@@ -19,4 +19,25 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // ⚡ Bolt: Configure manualChunks to optimize loading performance, improve caching,
+  // and resolve Netlify CI chunk limit failures.
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+            if (id.includes('firestore')) return 'vendor-firebase-firestore';
+            if (id.includes('auth')) return 'vendor-firebase-auth';
+            return 'vendor-firebase-core';
+          }
+          if (id.includes('node_modules/recharts/')) return 'vendor-recharts';
+          if (id.includes('node_modules/mapbox-gl/')) return 'vendor-mapbox';
+          if (id.includes('node_modules/lucide-react/')) return 'vendor-icons';
+          if (id.includes('node_modules/@radix-ui/')) return 'vendor-radix';
+          if (id.includes('node_modules/react-router')) return 'vendor-router';
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) return 'vendor-react';
+        }
+      }
+    }
+  }
 }));
