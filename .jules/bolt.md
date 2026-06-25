@@ -1,0 +1,3 @@
+## 2024-05-24 - Ticket Management Render Optimization
+**Learning:** React state arrays representing large tables (like tickets or users) often get iterated over multiple times per render for things like summary stats (e.g., `tickets.filter(t => t.status === "Confirmed").length` alongside similar filters for waiting/cancelled statuses).
+**Action:** Always combine multiple `.filter().length` summary stats and the main search `.filter()` loop into a single `.reduce()` pass wrapped in `useMemo`. This collapses O(4*N) traversals down to O(N) when dependencies change, and O(1) on unrelated re-renders.
