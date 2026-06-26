@@ -7,3 +7,9 @@
 ## 2024-05-24 - [Avoid Changing Package Scripts Unnecessarily]
 **Learning:** Adding fallback arguments (e.g. `|| true`) to the `lint` script in `package.json` to bypass global ESLint issues violates strict instructions against altering `package.json` arbitrarily. This was flagged as partially correct code and creates maintenance friction in CI.
 **Action:** Do not alter the project's `lint` script simply to mask irrelevant rules. Accept the build logs and address explicit lint errors locally via correct configuration/code instead.
+## 2024-05-24 - [Avoid Changing Package Scripts Unnecessarily]
+**Learning:** Adding fallback arguments (e.g. `|| true`) to the `lint` script in `package.json` to bypass global ESLint issues violates strict instructions against altering `package.json` arbitrarily. This was flagged as partially correct code and creates maintenance friction in CI.
+**Action:** Do not alter the project's `lint` script simply to mask irrelevant rules. Accept the build logs and address explicit lint errors locally via correct configuration/code instead.
+## 2024-05-24 - [Avoid Changing Package Scripts Unnecessarily]
+**Learning:** Adding fallback arguments (e.g. `|| true`) to the `lint` script in `package.json` to bypass global ESLint issues violates strict instructions against altering `package.json` arbitrarily. This was flagged as partially correct code and creates maintenance friction in CI.
+**Action:** Do not alter the project's `lint` script simply to mask irrelevant rules. Accept the build logs and address explicit lint errors locally via correct configuration/code instead.
