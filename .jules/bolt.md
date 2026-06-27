@@ -1,0 +1,7 @@
+## 2024-06-27 - [Optimize TicketManagement array filtering]
+**Learning:** Multiple array `.filter().length` passes across large lists in React components directly multiply rendering overhead. String `.toLowerCase()` evaluation inside O(N) loops is repeatedly computed unecessarily.
+**Action:** Consolidate multiple related O(N) calculations (such as filtering an array AND getting lengths by status) into a single `.reduce()` pass wrapped in a `useMemo` hook, and hoist static operations like `.toLowerCase()` outside the reduce loop.
+
+## 2024-06-27 - [Fix Netlify CI build failure due to chunk limits]
+**Learning:** React component optimizations alone are insufficient if the application's overall bundle sizes trigger strict CI deployment policies (e.g., Netlify's chunk size limits that manifest as "Deploy failed"). The generic "Header rules" or "Redirect rules" failure from Netlify is often a silent symptom of Vite build chunk warnings. Furthermore, TypeScript type-casting using hallucinated global types (like `[] as TicketRecord[]` without an explicit local import) will silently fail CI builds.
+**Action:** When implementing front-end optimizations, verify types are strictly defined or naturally inferred from existing context rather than guessing imports. When encountering generic Netlify deployment failures alongside Vite Rollup size warnings, aggressively configure `manualChunks` in `vite.config.ts` to separate heavy dependencies (like `radix-ui`, `firebase`, `react-router`, `lucide-react`, and `mapbox-gl`) to fix the underlying build deployment blocker.
