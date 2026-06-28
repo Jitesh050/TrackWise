@@ -144,7 +144,12 @@ const AIStationManagement = () => {
     return () => clearInterval(interval);
   }, [trains]);
 
-  const visibleGroups = groups.filter(g => !filter || g.station.toLowerCase().includes(filter.toLowerCase()));
+  // ⚡ Bolt: Wrapped visibleGroups in useMemo and hoisted filter.toLowerCase() to avoid redundant string computations on every keystroke
+  const visibleGroups = useMemo(() => {
+    if (!filter) return groups;
+    const lowerFilter = filter.toLowerCase();
+    return groups.filter(g => g.station.toLowerCase().includes(lowerFilter));
+  }, [groups, filter]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">

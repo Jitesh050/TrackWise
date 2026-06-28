@@ -1,0 +1,3 @@
+## 2024-11-20 - [Optimization: React List Processing Overhead]
+**Learning:** In list-heavy components like `AIStationManagement`, chaining unmemoized array transformations (`.map().map().filter()`) and performing per-item string operations (e.g., `toLowerCase()`) creates significant garbage collection churn on every keystroke in filtering.
+**Action:** When filtering or transforming arrays in React, always hoist loop-invariant operations (like search query lowercasing) outside the loop and consolidate multi-pass operations (like `map/filter`) into a single `reduce` block to minimize redundant allocations.
