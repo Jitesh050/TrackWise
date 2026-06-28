@@ -1,3 +1,3 @@
-## 2024-11-20 - [Optimization: React List Processing Overhead]
-**Learning:** In list-heavy components like `AIStationManagement`, chaining unmemoized array transformations (`.map().map().filter()`) and performing per-item string operations (e.g., `toLowerCase()`) creates significant garbage collection churn on every keystroke in filtering.
-**Action:** When filtering or transforming arrays in React, always hoist loop-invariant operations (like search query lowercasing) outside the loop and consolidate multi-pass operations (like `map/filter`) into a single `reduce` block to minimize redundant allocations.
+## 2024-11-20 - [Optimization: Bundle Chunking for CI Failures]
+**Learning:** Netlify CI fails with cryptic "Deploy failed" or "Header rules" errors when Vite's default 500kB chunk limit is exceeded, especially due to mixed static and dynamic imports (e.g., `firebase/auth`).
+**Action:** When a project fails CI with build warnings, split heavy dependencies into separate chunks using `build.rollupOptions.output.manualChunks` in `vite.config.ts`, ensuring string matching paths are exact and Rollup handles them distinctly.
