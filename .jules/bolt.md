@@ -1,0 +1,3 @@
+## 2024-05-18 - [Optimizing Multiple Array Iterations in AIStationManagement]
+**Learning:** Found multiple chained array manipulations (`.map().map().filter()`) inside `handleAnnounceArrivals` which caused unnecessary loop overhead and intermediate array object creations. Also, `visibleGroups` was recalculated on every render, performing redundant `.toLowerCase()` string computations inside the O(N) loop.
+**Action:** Consolidate multi-pass functional chains into single-pass `.reduce()` where applicable to save memory allocations. Wrap reactive list filtering in `useMemo` and hoist string conversions out of the filter callback loop to reduce redundant executions.
