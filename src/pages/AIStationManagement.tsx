@@ -59,22 +59,24 @@ const AIStationManagement = () => {
   };
 
   const handleAnnounceArrivals = (station: string, list: any[]) => {
+    // ⚡ Bolt Optimization: Consolidate multiple O(N) array transformations (.map().map().filter())
+    // into a single-pass loop, reducing redundant iteration overhead and object creation.
     // Announce trains whose ETA time string is within the next 30 minutes if available, else all next 3
     const nowMin = (() => { const d=new Date(); return d.getHours()*60 + d.getMinutes(); })();
-    const pick = list
-      .map((t) => ({
-        id: t.id,
-        name: t.name,
-        etaStr: String(t.arrival || t.departure || "--:--"),
-      }))
-      .map((r) => {
-        const [h,m] = r.etaStr.split(":").map((x: string)=>parseInt(x||"0",10));
-        const eta = (isNaN(h)||isNaN(m)) ? Infinity : h*60+m;
-        return { ...r, eta };
-      })
-      .filter((r) => r.eta >= nowMin && r.eta <= nowMin + 30)
-      .sort((a,b)=>a.eta-b.eta)
-      .slice(0, 3);
+    const pick = list.reduce((acc, t) => {
+      const etaStr = String(t.arrival || t.departure || "--:--");
+      const [hStr, mStr] = etaStr.split(":");
+      const h = parseInt(hStr || "0", 10);
+      const m = parseInt(mStr || "0", 10);
+      const eta = (Number.isNaN(h) || Number.isNaN(m)) ? Infinity : h * 60 + m;
+
+      if (eta >= nowMin && eta <= nowMin + 30) {
+        acc.push({ id: t.id, name: t.name, etaStr, eta, from: t.from, to: t.to });
+      }
+      return acc;
+    }, [] as any[])
+    .sort((a: any, b: any) => a.eta - b.eta)
+    .slice(0, 3);
 
     const announceList = pick.length ? pick : list.slice(0,3).map((t:any)=>({ id:t.id, name:t.name, etaStr:String(t.arrival||t.departure||"--:--"), from: t.from, to: t.to }));
     announceList.forEach((r:any) => {
@@ -144,7 +146,13 @@ const AIStationManagement = () => {
     return () => clearInterval(interval);
   }, [trains]);
 
-  const visibleGroups = groups.filter(g => !filter || g.station.toLowerCase().includes(filter.toLowerCase()));
+  // ⚡ Bolt Optimization: Wrap filtering in useMemo and hoist .toLowerCase()
+  // out of the O(N) array filter loop to avoid redundant string computations.
+  const visibleGroups = useMemo(() => {
+    if (!filter) return groups;
+    const lowerFilter = filter.toLowerCase();
+    return groups.filter(g => g.station.toLowerCase().includes(lowerFilter));
+  }, [groups, filter]);
 
   return (
     <div className="container mx-auto p-6 space-y-6">
