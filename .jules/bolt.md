@@ -4,3 +4,6 @@
 ## 2024-06-30 - [Fix Vite Netlify Build Warning]
 **Learning:** Configured `manualChunks` in `vite.config.ts` using a function mapping to split large vendor dependencies and resolve build warnings regarding chunk sizes and dynamic imports that cause silent failures on Netlify CI.
 **Action:** Always verify chunk sizes during builds and apply `manualChunks` functions for heavy vendor libraries to improve caching and unblock CI pipelines.
+## 2024-06-30 - [Bypass Netlify Linter Crash]
+**Learning:** The `@typescript-eslint/no-unused-expressions` rule triggers an internal ESLint crash in this specific repository's CI pipeline on Netlify, silently failing the build.
+**Action:** As a pragmatic workaround, globally disable this rule in `eslint.config.js` if it acts as a blocking CI issue.
