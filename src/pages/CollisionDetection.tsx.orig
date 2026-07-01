@@ -70,19 +70,15 @@ const CollisionDetection = () => {
 
       const arr = SCHEDULES_BY_TRAIN[String(t.id)] || [];
       if (arr.length >= 2) {
-        try {
-          const first = arr[0];
-          const last = arr[arr.length - 1];
-          const km = Math.max(0, (last.cum_distance_km || 0) - (first.cum_distance_km || 0));
-          const dep = (first.departure || first.arrival || "00:00").split(":");
-          const arrv = (last.arrival || last.departure || "00:00").split(":");
-          const depMin = (first.day_offset || 0) * 1440 + (+dep[0]||0)*60 + (+dep[1]||0);
-          const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0]||0)*60 + (+arrv[1]||0);
-          const hours = Math.max(0.1, (arrMin - depMin) / 60);
-          speeds.push(km / hours);
-        } catch {
-          // skip malformed data silently
-        }
+        const first = arr[0];
+        const last = arr[arr.length - 1];
+        const km = Math.max(0, (last.cum_distance_km || 0) - (first.cum_distance_km || 0));
+        const dep = (first.departure || first.arrival || "00:00").split(":");
+        const arrv = (last.arrival || last.departure || "00:00").split(":");
+        const depMin = (first.day_offset || 0) * 1440 + (+dep[0]||0)*60 + (+dep[1]||0);
+        const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0]||0)*60 + (+arrv[1]||0);
+        const hours = Math.max(0.1, (arrMin - depMin) / 60);
+        speeds.push(km / hours);
       }
     });
 
@@ -99,7 +95,7 @@ const CollisionDetection = () => {
   return (
     <div className="container mx-auto p-6">
       <h1 className="text-3xl font-bold mb-6">Railway Network Dashboard</h1>
-      
+
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <Card className="bg-blue-50 border-blue-200">
@@ -159,7 +155,7 @@ const CollisionDetection = () => {
                 <div>
                   <CardTitle className="text-lg">{route.name}</CardTitle>
                   <CardDescription>
-                    {route.trains.length} active train{route.trains.length !== 1 ? 's' : ''} • 
+                    {route.trains.length} active train{route.trains.length !== 1 ? 's' : ''} •
                     Last updated {route.lastUpdate}
                   </CardDescription>
                 </div>
