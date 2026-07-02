@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -76,17 +76,34 @@ const PriorityTicketManagement = () => {
     }
   };
 
-  const filteredTickets = priorityTickets.filter(ticket => {
-    const matchesFilter = filterType === "all" || ticket.priorityType === filterType;
-    const matchesSearch = ticket.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.trainNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  const { filteredTickets, pendingCount, approvedCount, rejectedCount } = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
 
-  const pendingTickets = priorityTickets.filter(t => t.status === "Pending");
-  const approvedTickets = priorityTickets.filter(t => t.status === "Approved");
-  const rejectedTickets = priorityTickets.filter(t => t.status === "Rejected");
+    return priorityTickets.reduce((acc, ticket) => {
+      // Calculate stats
+      if (ticket.status === "Pending") acc.pendingCount++;
+      else if (ticket.status === "Approved") acc.approvedCount++;
+      else if (ticket.status === "Rejected") acc.rejectedCount++;
+
+      // Filter logic
+      const matchesFilter = filterType === "all" || ticket.priorityType === filterType;
+      const matchesSearch = !lowerSearch ||
+                           ticket.passengerName.toLowerCase().includes(lowerSearch) ||
+                           ticket.pnr.toLowerCase().includes(lowerSearch) ||
+                           ticket.trainNumber.toLowerCase().includes(lowerSearch);
+
+      if (matchesFilter && matchesSearch) {
+        acc.filteredTickets.push(ticket);
+      }
+
+      return acc;
+    }, {
+      filteredTickets: [] as PriorityTicketRecord[],
+      pendingCount: 0,
+      approvedCount: 0,
+      rejectedCount: 0
+    });
+  }, [priorityTickets, filterType, searchTerm]);
 
   if (loading) {
     return (
@@ -106,7 +123,7 @@ const PriorityTicketManagement = () => {
               <Clock className="h-4 w-4 text-yellow-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Pending</p>
-                <p className="text-2xl font-bold text-yellow-600">{pendingTickets.length}</p>
+                <p className="text-2xl font-bold text-yellow-600">{pendingCount}</p>
               </div>
             </div>
           </CardContent>
@@ -118,7 +135,7 @@ const PriorityTicketManagement = () => {
               <CheckCircle className="h-4 w-4 text-green-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Approved</p>
-                <p className="text-2xl font-bold text-green-600">{approvedTickets.length}</p>
+                <p className="text-2xl font-bold text-green-600">{approvedCount}</p>
               </div>
             </div>
           </CardContent>
@@ -130,7 +147,7 @@ const PriorityTicketManagement = () => {
               <XCircle className="h-4 w-4 text-red-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Rejected</p>
-                <p className="text-2xl font-bold text-red-600">{rejectedTickets.length}</p>
+                <p className="text-2xl font-bold text-red-600">{rejectedCount}</p>
               </div>
             </div>
           </CardContent>
