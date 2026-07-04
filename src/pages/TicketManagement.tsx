@@ -42,6 +42,8 @@ const TicketManagement = () => {
     setLoading(false);
   };
 
+  // Optimization: Consolidate three O(N) array passes into a single pass using reduce
+  // and prevent recalculation on every render using useMemo.
   const stats = useMemo(() => {
     return tickets.reduce(
       (acc, t) => {
@@ -54,6 +56,8 @@ const TicketManagement = () => {
     );
   }, [tickets]);
 
+  // Optimization: Wrap filtered array in useMemo to avoid recreating it on every render,
+  // and hoist the toLowerCase() call outside the loop to avoid redundant string allocations.
   const filteredTickets = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
     return tickets.filter((ticket) => {
