@@ -1,0 +1,3 @@
+## 2024-07-06 - [Premature micro-optimization of mock data]
+**Learning:** `src/pages/UserManagement.tsx` uses mock data. Do not attempt to optimize components by hoisting or precomputing static data if it is marked as mock data (e.g., `// Mock data - in real app, this would come from API`). Optimizing mock data destined to become stateful API data provides zero real-world benefit, violates rules against premature micro-optimization, and will be rejected in code review.
+**Action:** Skip optimization for static data or stats computation if it's explicitly marked as mock data, especially if it's meant to be replaced by an API call in the future. Check for real performance bottlenecks instead.
