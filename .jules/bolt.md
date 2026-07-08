@@ -1,0 +1,3 @@
+## 2024-05-18 - [Avoid multiple O(N) filtering in React renders]
+**Learning:** This codebase frequently recalculates derived state (like stats based on multiple statuses) by chaining or writing multiple `.filter(…).length` array iterations directly in the JSX render body. This causes unnecessary repetitive O(N) operations and rapid garbage collection overhead on every render, especially on large lists.
+**Action:** Consolidate these multiple `.filter().length` calls into a single `reduce` pass, wrap it in a `useMemo` block, and hoist any static transformations (like string `.toLowerCase()`) outside of the filter/reduce loops to substantially improve rendering performance.
