@@ -42,13 +42,35 @@ const TicketManagement = () => {
     setLoading(false);
   };
 
-  const filteredTickets = tickets.filter(ticket => {
-    const matchesSearch = ticket.passengerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.pnr.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ticket.trainNumber.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const { filteredTickets, stats } = React.useMemo(() => {
+    // ⚡ Bolt: Hoist toLowerCase calculation outside the loop for O(1) string conversion
+    const searchLower = searchTerm.toLowerCase();
+
+    // ⚡ Bolt: Consolidate multiple O(N) filter and stats calculation passes into a single O(N) reduce pass
+    return tickets.reduce((acc, ticket) => {
+      // Calculate overall stats in the same pass
+      if (ticket.status === "Confirmed") acc.stats.confirmed++;
+      else if (ticket.status === "Waiting") acc.stats.waiting++;
+      else if (ticket.status === "Cancelled") acc.stats.cancelled++;
+
+      // Apply filtering logic
+      const matchesSearch =
+        ticket.passengerName.toLowerCase().includes(searchLower) ||
+        ticket.pnr.toLowerCase().includes(searchLower) ||
+        ticket.trainNumber.toLowerCase().includes(searchLower);
+
+      const matchesFilter = filterStatus === "all" || ticket.status === filterStatus;
+
+      if (matchesSearch && matchesFilter) {
+        acc.filteredTickets.push(ticket);
+      }
+
+      return acc;
+    }, {
+      filteredTickets: [] as TicketRecord[],
+      stats: { confirmed: 0, waiting: 0, cancelled: 0 }
+    });
+  }, [tickets, searchTerm, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -96,7 +118,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Confirmed</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {tickets.filter(t => t.status === "Confirmed").length}
+                  {stats.confirmed}
                 </p>
               </div>
             </div>
@@ -110,7 +132,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Waiting</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {tickets.filter(t => t.status === "Waiting").length}
+                  {stats.waiting}
                 </p>
               </div>
             </div>
@@ -124,7 +146,7 @@ const TicketManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Cancelled</p>
                 <p className="text-2xl font-bold text-red-600">
-                  {tickets.filter(t => t.status === "Cancelled").length}
+                  {stats.cancelled}
                 </p>
               </div>
             </div>
