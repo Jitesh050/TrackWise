@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,57 +17,82 @@ import {
   Zap
 } from "lucide-react";
 
+// Mock data - in real app, this would come from API
+const TRAINS_DATA = [
+  {
+    id: "1",
+    trainNumber: "12345",
+    trainName: "Rajdhani Express",
+    status: "Active",
+    route: "Delhi → Mumbai",
+    capacity: 1200,
+    currentLocation: "Delhi",
+    nextStation: "Agra",
+    estimatedArrival: "14:30",
+    occupancy: 85
+  },
+  {
+    id: "2",
+    trainNumber: "12346",
+    trainName: "Shatabdi Express",
+    status: "Active",
+    route: "Mumbai → Pune",
+    capacity: 800,
+    currentLocation: "Mumbai",
+    nextStation: "Thane",
+    estimatedArrival: "09:15",
+    occupancy: 92
+  },
+  {
+    id: "3",
+    trainNumber: "12347",
+    trainName: "Duronto Express",
+    status: "Maintenance",
+    route: "Kolkata → Delhi",
+    capacity: 1000,
+    currentLocation: "Kolkata",
+    nextStation: "Asansol",
+    estimatedArrival: "16:45",
+    occupancy: 0
+  }
+];
+
+const OVERALL_STATS = TRAINS_DATA.reduce(
+  (acc, train) => {
+    acc.capacity += train.capacity;
+    acc.occupancySum += train.occupancy;
+    return acc;
+  },
+  { capacity: 0, occupancySum: 0 }
+);
+
 const TrainManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
 
-  // Mock data - in real app, this would come from API
-  const trains = [
-    {
-      id: "1",
-      trainNumber: "12345",
-      trainName: "Rajdhani Express",
-      status: "Active",
-      route: "Delhi → Mumbai",
-      capacity: 1200,
-      currentLocation: "Delhi",
-      nextStation: "Agra",
-      estimatedArrival: "14:30",
-      occupancy: 85
-    },
-    {
-      id: "2",
-      trainNumber: "12346",
-      trainName: "Shatabdi Express",
-      status: "Active",
-      route: "Mumbai → Pune",
-      capacity: 800,
-      currentLocation: "Mumbai",
-      nextStation: "Thane",
-      estimatedArrival: "09:15",
-      occupancy: 92
-    },
-    {
-      id: "3",
-      trainNumber: "12347",
-      trainName: "Duronto Express",
-      status: "Maintenance",
-      route: "Kolkata → Delhi",
-      capacity: 1000,
-      currentLocation: "Kolkata",
-      nextStation: "Asansol",
-      estimatedArrival: "16:45",
-      occupancy: 0
-    }
-  ];
+  // O(N) single-pass filter + stats compute
+  const { filteredTrains, activeCount, maintenanceCount } = useMemo(() => {
+    const term = searchTerm.toLowerCase();
+    return TRAINS_DATA.reduce(
+      (acc, train) => {
+        // Count stats for ALL trains, not just filtered ones (to preserve UI stats behavior)
+        if (train.status === "Active") acc.activeCount++;
+        if (train.status === "Maintenance") acc.maintenanceCount++;
 
-  const filteredTrains = trains.filter(train => {
-    const matchesSearch = train.trainName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.trainNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.route.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || train.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+        const matchesSearch =
+          train.trainName.toLowerCase().includes(term) ||
+          train.trainNumber.toLowerCase().includes(term) ||
+          train.route.toLowerCase().includes(term);
+        const matchesFilter = filterStatus === "all" || train.status === filterStatus;
+
+        if (matchesSearch && matchesFilter) {
+          acc.filteredTrains.push(train);
+        }
+        return acc;
+      },
+      { filteredTrains: [] as typeof TRAINS_DATA, activeCount: 0, maintenanceCount: 0 }
+    );
+  }, [searchTerm, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,7 +132,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Trains</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {trains.filter(t => t.status === "Active").length}
+                  {activeCount}
                 </p>
               </div>
             </div>
@@ -121,7 +146,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Maintenance</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {trains.filter(t => t.status === "Maintenance").length}
+                  {maintenanceCount}
                 </p>
               </div>
             </div>
@@ -135,7 +160,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Capacity</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {trains.reduce((sum, train) => sum + train.capacity, 0).toLocaleString()}
+                  {OVERALL_STATS.capacity.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -149,7 +174,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg Occupancy</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {Math.round(trains.reduce((sum, train) => sum + train.occupancy, 0) / trains.length)}%
+                  {Math.round(OVERALL_STATS.occupancySum / TRAINS_DATA.length)}%
                 </p>
               </div>
             </div>
