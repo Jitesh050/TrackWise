@@ -19,4 +19,38 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        // Manually chunk heavy dependencies to optimize build performance,
+        // improve caching, and prevent Netlify CI deployment failures due to chunk size limits.
+        manualChunks: (id) => {
+          if (id.includes('node_modules/firebase/auth') || id.includes('node_modules/@firebase/auth')) {
+            return 'vendor-firebase-auth';
+          }
+          if (id.includes('node_modules/firebase/firestore') || id.includes('node_modules/@firebase/firestore')) {
+            return 'vendor-firebase-firestore';
+          }
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+            return 'vendor-firebase-core';
+          }
+          if (id.includes('node_modules/lucide-react/')) {
+            return 'vendor-lucide';
+          }
+          if (id.includes('node_modules/recharts/')) {
+            return 'vendor-recharts';
+          }
+          if (id.includes('node_modules/@radix-ui/')) {
+            return 'vendor-radix';
+          }
+          if (id.includes('node_modules/mapbox-gl/')) {
+            return 'vendor-mapbox';
+          }
+          if (id.includes('node_modules/react-router') || id.includes('node_modules/@remix-run/')) {
+            return 'vendor-router';
+          }
+        }
+      }
+    }
+  }
 }));
