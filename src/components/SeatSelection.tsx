@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,27 +39,32 @@ interface SeatSelectionProps {
 const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) => {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
-  // Generate seat layout (simplified coach layout)
-  const generateSeats = () => {
-    const seats = [];
+  // Memoize seat layout generation to prevent re-randomizing reservations
+  // and unmounting/remounting seats on every render or state change.
+  const seatsByRow = useMemo(() => {
+    const generatedSeats = [];
     const rows = ['A', 'B', 'C', 'D', 'E', 'F'];
     for (let row = 1; row <= 20; row++) {
       for (let seat of rows) {
         const seatNumber = `${row}${seat}`;
         const isReserved = Math.random() < 0.3; // 30% chance reserved
         const isAvailable = !isReserved;
-        seats.push({
+        generatedSeats.push({
           seatNumber,
           isAvailable,
           isReserved,
-          isSelected: selectedSeats.includes(seatNumber)
         });
       }
     }
-    return seats;
-  };
 
-  const seats = generateSeats();
+    const grouped: { [key: number]: typeof generatedSeats } = {};
+    generatedSeats.forEach(seat => {
+      const row = parseInt(seat.seatNumber);
+      if (!grouped[row]) grouped[row] = [];
+      grouped[row].push(seat);
+    });
+    return grouped;
+  }, []); // Empty dependency array ensures this only runs once
 
   const handleSeatSelect = (seatNumber: string) => {
     setSelectedSeats(prev => {
@@ -75,18 +80,6 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
       return newSelection;
     });
   };
-
-  const groupSeatsByRow = () => {
-    const grouped: { [key: number]: typeof seats } = {};
-    seats.forEach(seat => {
-      const row = parseInt(seat.seatNumber);
-      if (!grouped[row]) grouped[row] = [];
-      grouped[row].push(seat);
-    });
-    return grouped;
-  };
-
-  const seatsByRow = groupSeatsByRow();
 
   return (
     <div className="flex gap-6">
@@ -126,7 +119,9 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
                     {rowSeats.slice(0, 3).map(seat => (
                       <Seat
                         key={seat.seatNumber}
-                        {...seat}
+                        seatNumber={seat.seatNumber}
+                        isAvailable={seat.isAvailable}
+                        isReserved={seat.isReserved}
                         isSelected={selectedSeats.includes(seat.seatNumber)}
                         onSelect={handleSeatSelect}
                       />
@@ -139,7 +134,9 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
                     {rowSeats.slice(3, 6).map(seat => (
                       <Seat
                         key={seat.seatNumber}
-                        {...seat}
+                        seatNumber={seat.seatNumber}
+                        isAvailable={seat.isAvailable}
+                        isReserved={seat.isReserved}
                         isSelected={selectedSeats.includes(seat.seatNumber)}
                         onSelect={handleSeatSelect}
                       />

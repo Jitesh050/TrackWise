@@ -1,0 +1,4 @@
+
+## 2024-05-24 - [Unmemoized Random Generation in React Components]
+**Learning:** Found a critical anti-pattern in `src/components/SeatSelection.tsx` where an entire 120-element array of mock seats was being generated with `Math.random()` on every render. Because the random function dictated the `isReserved` status, any state change (like selecting a seat) caused a full component re-render, unmounting and remounting child components and randomly changing the UI layout for reserved seats.
+**Action:** Use `useMemo` with an empty dependency array to compute mock data that relies on `Math.random()` to ensure it only generates once per lifecycle. Also explicitly pass props rather than spreading objects (e.g., `{...seat}`) when mapping over child elements to avoid prop collisions and satisfy static analysis.
