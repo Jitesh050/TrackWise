@@ -1,0 +1,3 @@
+## 2025-10-31 - PassengerDashboard Component Optimization
+**Learning:** We can significantly improve React component re-rendering performance in heavy metrics components by reducing repeated passes on O(N) filtering logic. It is especially impactful to hoist out heavy static maps (like STATIONS_BY_CODE) from the function component to avoid O(M) reallocation per render.
+**Action:** Next time there is a component doing statistics aggregations and filtering alongside heavy mapping on every render, immediately look to hoist static derivations outside of the component and combine dynamic metric calculations under a single `useMemo` pass.
