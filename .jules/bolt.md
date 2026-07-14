@@ -1,0 +1,3 @@
+## 2024-07-14 - Optimize Component Statistics Rendering
+**Learning:** Found a common anti-pattern across components (e.g. `TicketManagement.tsx`, `TrainManagement.tsx`, `UserManagement.tsx`) where multiple `array.filter(condition).length` operations are called directly in the JSX render function to calculate metric counts, along with a separate `filter()` pass for search functionality. In React, this recalculates O(N) array passes multiple times per render cycle.
+**Action:** Consolidate list filtering and metric calculations into a single `.reduce()` pass wrapped in a `useMemo` hook, while hoisting string operations like `.toLowerCase()` outside the loop. This reduces operations from O(N * (filters + 1)) to O(N). Look for this pattern in similar dashboard components.
