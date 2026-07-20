@@ -19,4 +19,24 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Optimization: Split heavy dependencies into separate vendor chunks to prevent large bundle sizes and improve caching
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+            if (id.includes('/auth/')) return 'vendor-firebase-auth';
+            if (id.includes('/firestore/')) return 'vendor-firebase-firestore';
+            return 'vendor-firebase-core';
+          }
+          if (id.includes('node_modules/recharts/')) return 'vendor-recharts';
+          if (id.includes('node_modules/mapbox-gl/')) return 'vendor-mapbox';
+          if (id.includes('node_modules/lucide-react/')) return 'vendor-lucide';
+          if (id.includes('node_modules/@radix-ui/')) return 'vendor-radix';
+          if (id.includes('node_modules/react-router/') || id.includes('node_modules/react-router-dom/')) return 'vendor-router';
+          if (id.includes('node_modules/react/') || id.includes('node_modules/react-dom/')) return 'vendor-react';
+        },
+      },
+    },
+  },
 }));
