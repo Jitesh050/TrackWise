@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -39,28 +39,6 @@ interface SeatSelectionProps {
 const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) => {
   const [selectedSeats, setSelectedSeats] = useState<string[]>([]);
 
-  // Generate seat layout (simplified coach layout)
-  const generateSeats = () => {
-    const seats = [];
-    const rows = ['A', 'B', 'C', 'D', 'E', 'F'];
-    for (let row = 1; row <= 20; row++) {
-      for (let seat of rows) {
-        const seatNumber = `${row}${seat}`;
-        const isReserved = Math.random() < 0.3; // 30% chance reserved
-        const isAvailable = !isReserved;
-        seats.push({
-          seatNumber,
-          isAvailable,
-          isReserved,
-          isSelected: selectedSeats.includes(seatNumber)
-        });
-      }
-    }
-    return seats;
-  };
-
-  const seats = generateSeats();
-
   const handleSeatSelect = (seatNumber: string) => {
     setSelectedSeats(prev => {
       let newSelection;
@@ -76,7 +54,23 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
     });
   };
 
-  const groupSeatsByRow = () => {
+  // ⚡ Bolt: Memoize seat layout and random reservations to prevent regeneration and unmounting on re-renders
+  const seatsByRow = useMemo(() => {
+    const seats = [];
+    const rows = ['A', 'B', 'C', 'D', 'E', 'F'];
+    for (let row = 1; row <= 20; row++) {
+      for (let seat of rows) {
+        const seatNumber = `${row}${seat}`;
+        const isReserved = Math.random() < 0.3; // 30% chance reserved
+        const isAvailable = !isReserved;
+        seats.push({
+          seatNumber,
+          isAvailable,
+          isReserved,
+        });
+      }
+    }
+
     const grouped: { [key: number]: typeof seats } = {};
     seats.forEach(seat => {
       const row = parseInt(seat.seatNumber);
@@ -84,9 +78,7 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
       grouped[row].push(seat);
     });
     return grouped;
-  };
-
-  const seatsByRow = groupSeatsByRow();
+  }, []);
 
   return (
     <div className="flex gap-6">
@@ -126,7 +118,9 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
                     {rowSeats.slice(0, 3).map(seat => (
                       <Seat
                         key={seat.seatNumber}
-                        {...seat}
+                        seatNumber={seat.seatNumber}
+                        isAvailable={seat.isAvailable}
+                        isReserved={seat.isReserved}
                         isSelected={selectedSeats.includes(seat.seatNumber)}
                         onSelect={handleSeatSelect}
                       />
@@ -139,7 +133,9 @@ const SeatSelection = ({ onSeatsSelected, maxSeats = 4 }: SeatSelectionProps) =>
                     {rowSeats.slice(3, 6).map(seat => (
                       <Seat
                         key={seat.seatNumber}
-                        {...seat}
+                        seatNumber={seat.seatNumber}
+                        isAvailable={seat.isAvailable}
+                        isReserved={seat.isReserved}
                         isSelected={selectedSeats.includes(seat.seatNumber)}
                         onSelect={handleSeatSelect}
                       />
