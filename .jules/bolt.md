@@ -1,0 +1,3 @@
+## 2024-07-23 - Optimize train schedules lookup in useTrainStatus
+**Learning:** `useTrainStatus` hook had a hidden $O(N \times M)$ operation inside `generateLiveStatus` which ran every minute via `setInterval`. It filtered the entire schedules array for every train on every simulation tick.
+**Action:** Replaced the nested `.filter()` inside the `setInterval` generator function with a precomputed module-level Map (`SCHEDULES_BY_TRAIN`), changing the time complexity to $O(N)$ and reducing the simulation overhead significantly. Look for expensive nested array operations in frequently called intervals or hooks, and move static precomputation to the module level.
