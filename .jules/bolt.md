@@ -1,0 +1,3 @@
+## 2024-07-24 - Consolidated Array Iterations in React Components
+**Learning:** This codebase frequently uses multiple `array.filter(condition).length` calls inside the render method to generate categorical statistics alongside the primary list filtering. This results in an anti-pattern of redundant O(N) passes on every render.
+**Action:** Always check for redundant `.filter().length` usage when rendering list items and statistics side-by-side. Optimize by consolidating the stat counting and list filtering into a single `.reduce()` pass wrapped in a `useMemo` hook, and hoist repeated string operations (like `.toLowerCase()`) outside the loop.
