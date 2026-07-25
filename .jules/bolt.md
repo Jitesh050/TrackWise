@@ -1,0 +1,3 @@
+## 2024-05-14 - [Consolidation Pattern in PassengerDashboard]
+**Learning:** Found multiple instances where the codebase iterates over the same array (`tickets`) sequentially multiple times during render (e.g., in `PassengerDashboard.tsx`, calculating `activeBookings`, `nextJourney`, and `milesTraveled` separately).
+**Action:** Consolidate these iterative loops into a single pass using `useMemo` to dramatically reduce redundant allocations and computational overhead per render. In `PassengerDashboard.tsx`, also hoisted the static `STATIONS_BY_CODE` Map outside the component to prevent O(N) reallocation per render.
