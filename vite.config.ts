@@ -19,4 +19,23 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          // Split vendor code to improve caching and reduce chunk size
+          if (id.includes('node_modules/firebase/') || id.includes('node_modules/@firebase/')) {
+            return 'vendor-firebase';
+          }
+          if (id.includes('node_modules/recharts/')) {
+            return 'vendor-recharts';
+          }
+          if (id.includes('node_modules/mapbox-gl/')) {
+            return 'vendor-mapbox';
+          }
+        }
+      }
+    }
+  }
 }));
