@@ -8,6 +8,21 @@ import { useTrainStatus } from "@/hooks/useTrainStatus";
 // @ts-ignore
 import schedules from "../../simulation/schedules_100.json";
 
+// ⚡ Bolt Optimization: Hoist static schedule grouping and sorting outside the component
+// to prevent O(M) allocations and O(K log K) sorting per render.
+const STATIC_SCHEDULES_BY_TRAIN = (() => {
+  const byTrain: Record<string, any[]> = {};
+  (schedules as any[]).forEach((s) => {
+    (byTrain[s.train_no] ||= []).push(s);
+  });
+
+  // Pre-sort schedules for each train once
+  Object.values(byTrain).forEach(arr => {
+    arr.sort((a, b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
+  });
+  return byTrain;
+})();
+
 const CollisionDetection = () => {
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const { trains } = useTrainStatus();
@@ -40,42 +55,61 @@ const CollisionDetection = () => {
 
   // Risk badges removed per request
 
-  const totalTrains = (trains || []).length;
-  const activeStations = new Set((trains || []).map((t: any) => t.nextStation).filter(Boolean)).size;
-  const onTimePct = (() => {
+  // ⚡ Bolt Optimization: Consolidate multiple O(N) train array passes into a single pass memoized block.
+  const { totalTrains, activeStations, onTimePct, averageSpeed } = useMemo(() => {
     const list = trains || [];
-    if (!list.length) return 0;
-    const ontime = list.filter((t: any) => String(t.status).toLowerCase().includes("on time")).length;
-    return Math.round((ontime / list.length) * 1000) / 10;
-  })();
-  const averageSpeed = (() => {
-    try {
-      const byTrain: Record<string, any[]> = {};
-      (schedules as any[]).forEach((s) => {
-        (byTrain[s.train_no] ||= []).push(s);
-      });
-      const speeds: number[] = [];
-      (trains || []).forEach((t: any) => {
-        const arr = byTrain[String(t.id)] || [];
-        if (arr.length < 2) return;
-        arr.sort((a,b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
+    if (!list.length) {
+      return { totalTrains: 0, activeStations: 0, onTimePct: 0, averageSpeed: 0 };
+    }
+
+    let onTimeCount = 0;
+    const stationsSet = new Set<string>();
+    const speeds: number[] = [];
+
+    list.forEach((t: any) => {
+      // 1. On Time check
+      if (String(t.status).toLowerCase().includes("on time")) {
+        onTimeCount++;
+      }
+
+      // 2. Active Stations check
+      if (t.nextStation) {
+        stationsSet.add(t.nextStation);
+      }
+
+      // 3. Average Speed calculation (using pre-grouped and pre-sorted static data)
+      const arr = STATIC_SCHEDULES_BY_TRAIN[String(t.id)] || [];
+      if (arr.length >= 2) {
         const first = arr[0];
         const last = arr[arr.length - 1];
         const km = Math.max(0, (last.cum_distance_km || 0) - (first.cum_distance_km || 0));
+
         const dep = (first.departure || first.arrival || "00:00").split(":");
         const arrv = (last.arrival || last.departure || "00:00").split(":");
-        const depMin = (first.day_offset || 0) * 1440 + (+dep[0]||0)*60 + (+dep[1]||0);
-        const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0]||0)*60 + (+arrv[1]||0);
+
+        const depMin = (first.day_offset || 0) * 1440 + (+dep[0] || 0) * 60 + (+dep[1] || 0);
+        const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0] || 0) * 60 + (+arrv[1] || 0);
+
         const hours = Math.max(0.1, (arrMin - depMin) / 60);
         speeds.push(km / hours);
-      });
-      if (!speeds.length) return 0;
-      return Math.round(speeds.reduce((a,b)=>a+b,0) / speeds.length);
-    } catch {
-      return 0;
-    }
-  })();
-  const highRiskRoutes = groups.filter(g => g.riskLevel === 'high').length;
+      }
+    });
+
+    const avgSpd = speeds.length > 0
+      ? Math.round(speeds.reduce((a, b) => a + b, 0) / speeds.length)
+      : 0;
+
+    return {
+      totalTrains: list.length,
+      activeStations: stationsSet.size,
+      onTimePct: Math.round((onTimeCount / list.length) * 1000) / 10,
+      averageSpeed: avgSpd
+    };
+  }, [trains]);
+
+  const highRiskRoutes = useMemo(() =>
+    groups.filter(g => g.riskLevel === 'high').length
+  , [groups]);
 
   return (
     <div className="container mx-auto p-6">
