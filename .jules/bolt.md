@@ -1,0 +1,3 @@
+## 2026-07-29 - [Consolidating React Renders with Pre-sorted Static Data]
+**Learning:** In heavily simulated components like CollisionDetection, processing raw static data arrays (e.g. sorting and grouping thousands of schedules) on every React render significantly impacts main thread performance, leading to UI stutter. Combining multiple O(N) filters against dynamic state (trains) into a single useMemo block further removes redundant iterations.
+**Action:** Always hoist static dataset transformation (grouping/sorting) outside component definitions or into single-run module-level IIFEs. Use useMemo to batch derived calculations (totalTrains, activeStations, averageSpeed) that iterate over the same dynamic arrays.
