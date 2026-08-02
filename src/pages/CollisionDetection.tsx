@@ -8,6 +8,17 @@ import { useTrainStatus } from "@/hooks/useTrainStatus";
 // @ts-ignore
 import schedules from "../../simulation/schedules_100.json";
 
+// Hoist static schedules parsing outside component render
+const STATIC_SCHEDULES_BY_TRAIN: Record<string, any[]> = {};
+(schedules as any[]).forEach((s) => {
+  (STATIC_SCHEDULES_BY_TRAIN[s.train_no] ||= []).push(s);
+});
+
+// Pre-sort schedule arrays for speed calculation
+Object.values(STATIC_SCHEDULES_BY_TRAIN).forEach(arr => {
+  arr.sort((a,b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
+});
+
 const CollisionDetection = () => {
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const { trains } = useTrainStatus();
@@ -40,25 +51,34 @@ const CollisionDetection = () => {
 
   // Risk badges removed per request
 
-  const totalTrains = (trains || []).length;
-  const activeStations = new Set((trains || []).map((t: any) => t.nextStation).filter(Boolean)).size;
-  const onTimePct = (() => {
+  // Consolidate dynamic train metrics into a single pass
+  const metrics = useMemo(() => {
     const list = trains || [];
-    if (!list.length) return 0;
-    const ontime = list.filter((t: any) => String(t.status).toLowerCase().includes("on time")).length;
-    return Math.round((ontime / list.length) * 1000) / 10;
-  })();
-  const averageSpeed = (() => {
-    try {
-      const byTrain: Record<string, any[]> = {};
-      (schedules as any[]).forEach((s) => {
-        (byTrain[s.train_no] ||= []).push(s);
-      });
-      const speeds: number[] = [];
-      (trains || []).forEach((t: any) => {
-        const arr = byTrain[String(t.id)] || [];
-        if (arr.length < 2) return;
-        arr.sort((a,b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
+    const totalTrains = list.length;
+
+    if (totalTrains === 0) {
+      return { totalTrains: 0, activeStations: 0, onTimePct: 0, averageSpeed: 0 };
+    }
+
+    const uniqueStations = new Set<string>();
+    let onTimeCount = 0;
+    let totalSpeed = 0;
+    let validSpeedCount = 0;
+
+    for (const t of list) {
+      // 1. Stations
+      if (t.nextStation) {
+        uniqueStations.add(t.nextStation);
+      }
+
+      // 2. On-Time
+      if (String(t.status).toLowerCase().includes("on time")) {
+        onTimeCount++;
+      }
+
+      // 3. Speed
+      const arr = STATIC_SCHEDULES_BY_TRAIN[String(t.id)] || [];
+      if (arr.length >= 2) {
         const first = arr[0];
         const last = arr[arr.length - 1];
         const km = Math.max(0, (last.cum_distance_km || 0) - (first.cum_distance_km || 0));
@@ -67,15 +87,22 @@ const CollisionDetection = () => {
         const depMin = (first.day_offset || 0) * 1440 + (+dep[0]||0)*60 + (+dep[1]||0);
         const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0]||0)*60 + (+arrv[1]||0);
         const hours = Math.max(0.1, (arrMin - depMin) / 60);
-        speeds.push(km / hours);
-      });
-      if (!speeds.length) return 0;
-      return Math.round(speeds.reduce((a,b)=>a+b,0) / speeds.length);
-    } catch {
-      return 0;
+        totalSpeed += (km / hours);
+        validSpeedCount++;
+      }
     }
-  })();
-  const highRiskRoutes = groups.filter(g => g.riskLevel === 'high').length;
+
+    return {
+      totalTrains,
+      activeStations: uniqueStations.size,
+      onTimePct: Math.round((onTimeCount / totalTrains) * 1000) / 10,
+      averageSpeed: validSpeedCount > 0 ? Math.round(totalSpeed / validSpeedCount) : 0
+    };
+  }, [trains]);
+
+  const { totalTrains, activeStations, onTimePct, averageSpeed } = metrics;
+
+  const highRiskRoutes = useMemo(() => groups.filter(g => g.riskLevel === 'high').length, [groups]);
 
   return (
     <div className="container mx-auto p-6">

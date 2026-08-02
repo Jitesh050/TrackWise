@@ -1,0 +1,3 @@
+## 2024-05-24 - [Hoist static data parsing out of render loop]
+**Learning:** Found an O(M) data parsing loop (grouping imported schedules) inside a component render pass that runs every single time the component re-renders (in this case, CollisionDetection). We can completely avoid parsing imported static JSON data on every render.
+**Action:** When working with imported static datasets that need structural transformation, hoist the parsing and transformation logic to the module level (outside the component function) so it runs exactly once upon module load, and cache the transformed structure.
