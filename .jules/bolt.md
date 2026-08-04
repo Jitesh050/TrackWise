@@ -1,0 +1,3 @@
+## 2024-05-18 - [Hoist Static Data outside Component to reduce overhead]
+**Learning:** React components frequently have static maps or complex static lookups being regenerated or repeatedly mapped on every render (e.g. `const byCode = new Map(stations.map(s => [s.id.toUpperCase(), s]));`).
+**Action:** Move static data derivation outside the component so it's initialized once per module load, or use `useMemo` for data that relies on static props but isn't strictly static across the whole app. In `src/pages/PassengerDashboard.tsx`, we can hoist `STATIONS_BY_CODE` outside `PassengerDashboard` to prevent reallocating a Map of all stations on every render.
