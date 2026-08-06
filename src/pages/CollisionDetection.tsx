@@ -8,19 +8,91 @@ import { useTrainStatus } from "@/hooks/useTrainStatus";
 // @ts-ignore
 import schedules from "../../simulation/schedules_100.json";
 
+// ⚡ Bolt Optimization: Hoist static schedule parsing to module level.
+// Prevents O(M) reallocation of schedules array into a dictionary on every component render.
+const STATIC_SCHEDULES_BY_TRAIN: Record<string, any[]> = {};
+(schedules as any[]).forEach((s) => {
+  (STATIC_SCHEDULES_BY_TRAIN[s.train_no] ||= []).push(s);
+});
+
+// Pre-sort the arrays so we don't mutate them during render
+Object.values(STATIC_SCHEDULES_BY_TRAIN).forEach(arr => {
+  if (arr.length >= 2) {
+    arr.sort((a,b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
+  }
+});
+
 const CollisionDetection = () => {
   const [selectedRoute, setSelectedRoute] = useState<string | null>(null);
   const { trains } = useTrainStatus();
 
-  const groups = useMemo(() => {
+  // ⚡ Bolt Optimization: Consolidate multiple independent O(N) array passes
+  // (for counting statuses, finding active stations, grouping schedules, calculating speeds)
+  // into a single O(N) `useMemo` pass over the `trains` array.
+  const {
+    groups,
+    totalTrains,
+    activeStations,
+    onTimePct,
+    averageSpeed,
+    highRiskRoutes
+  } = useMemo(() => {
+    const list = trains || [];
+    const total = list.length;
+    if (total === 0) {
+      return {
+        groups: [],
+        totalTrains: 0,
+        activeStations: 0,
+        onTimePct: 0,
+        averageSpeed: 0,
+        highRiskRoutes: 0
+      };
+    }
+
+    let onTimeCount = 0;
+    const stationsSet = new Set<string>();
     const byStation = new Map<string, any[]>();
-    (trains || []).forEach((t: any) => {
+    const speeds: number[] = [];
+
+    list.forEach((t: any) => {
+      // 1. Stations set for active stations
+      if (t.nextStation) {
+        stationsSet.add(t.nextStation);
+      }
+
+      // 2. On time count
+      if (String(t.status).toLowerCase().includes("on time")) {
+        onTimeCount++;
+      }
+
+      // 3. Average speed calculation
+      try {
+        const arr = STATIC_SCHEDULES_BY_TRAIN[String(t.id)] || [];
+        if (arr.length >= 2) {
+          // Array is pre-sorted at module level
+          const first = arr[0];
+          const last = arr[arr.length - 1];
+          const km = Math.max(0, (last.cum_distance_km || 0) - (first.cum_distance_km || 0));
+          const dep = (first.departure || first.arrival || "00:00").split(":");
+          const arrv = (last.arrival || last.departure || "00:00").split(":");
+          const depMin = (first.day_offset || 0) * 1440 + (+dep[0]||0)*60 + (+dep[1]||0);
+          const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0]||0)*60 + (+arrv[1]||0);
+          const hours = Math.max(0.1, (arrMin - depMin) / 60);
+          speeds.push(km / hours);
+        }
+      } catch (e) {
+        // ignore
+      }
+
+      // 4. Grouping by station
       const key = t.nextStation || "En Route";
-      const arr = byStation.get(key) || [];
-      arr.push(t);
-      byStation.set(key, arr);
+      const stationArr = byStation.get(key) || [];
+      stationArr.push(t);
+      byStation.set(key, stationArr);
     });
-    const list = Array.from(byStation.entries()).map(([station, arr], idx) => {
+
+    const groupsList = Array.from(byStation.entries()).map(([station, arr], idx) => {
       const riskLevel = arr.length >= 3 ? "high" : arr.length === 2 ? "low" : "safe";
       return {
         id: String(idx + 1),
@@ -35,47 +107,16 @@ const CollisionDetection = () => {
         lastUpdate: "just now",
       };
     });
-    return list;
+
+    return {
+      groups: groupsList,
+      totalTrains: total,
+      activeStations: stationsSet.size,
+      onTimePct: Math.round((onTimeCount / total) * 1000) / 10,
+      averageSpeed: speeds.length ? Math.round(speeds.reduce((a,b)=>a+b,0) / speeds.length) : 0,
+      highRiskRoutes: groupsList.filter(g => g.riskLevel === 'high').length
+    };
   }, [trains]);
-
-  // Risk badges removed per request
-
-  const totalTrains = (trains || []).length;
-  const activeStations = new Set((trains || []).map((t: any) => t.nextStation).filter(Boolean)).size;
-  const onTimePct = (() => {
-    const list = trains || [];
-    if (!list.length) return 0;
-    const ontime = list.filter((t: any) => String(t.status).toLowerCase().includes("on time")).length;
-    return Math.round((ontime / list.length) * 1000) / 10;
-  })();
-  const averageSpeed = (() => {
-    try {
-      const byTrain: Record<string, any[]> = {};
-      (schedules as any[]).forEach((s) => {
-        (byTrain[s.train_no] ||= []).push(s);
-      });
-      const speeds: number[] = [];
-      (trains || []).forEach((t: any) => {
-        const arr = byTrain[String(t.id)] || [];
-        if (arr.length < 2) return;
-        arr.sort((a,b) => (a.day_offset - b.day_offset) || (a.seq - b.seq));
-        const first = arr[0];
-        const last = arr[arr.length - 1];
-        const km = Math.max(0, (last.cum_distance_km || 0) - (first.cum_distance_km || 0));
-        const dep = (first.departure || first.arrival || "00:00").split(":");
-        const arrv = (last.arrival || last.departure || "00:00").split(":");
-        const depMin = (first.day_offset || 0) * 1440 + (+dep[0]||0)*60 + (+dep[1]||0);
-        const arrMin = (last.day_offset || 0) * 1440 + (+arrv[0]||0)*60 + (+arrv[1]||0);
-        const hours = Math.max(0.1, (arrMin - depMin) / 60);
-        speeds.push(km / hours);
-      });
-      if (!speeds.length) return 0;
-      return Math.round(speeds.reduce((a,b)=>a+b,0) / speeds.length);
-    } catch {
-      return 0;
-    }
-  })();
-  const highRiskRoutes = groups.filter(g => g.riskLevel === 'high').length;
 
   return (
     <div className="container mx-auto p-6">
