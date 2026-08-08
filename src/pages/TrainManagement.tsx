@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -61,13 +61,36 @@ const TrainManagement = () => {
     }
   ];
 
-  const filteredTrains = trains.filter(train => {
-    const matchesSearch = train.trainName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.trainNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.route.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || train.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const { filteredTrains, stats } = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+
+    return trains.reduce(
+      (acc, train) => {
+        // Statistics
+        if (train.status === "Active") acc.stats.activeTrains++;
+        if (train.status === "Maintenance") acc.stats.maintenanceTrains++;
+        acc.stats.totalCapacity += train.capacity;
+        acc.stats.totalOccupancy += train.occupancy;
+
+        // Filtering
+        const matchesSearch =
+          train.trainName.toLowerCase().includes(searchLower) ||
+          train.trainNumber.toLowerCase().includes(searchLower) ||
+          train.route.toLowerCase().includes(searchLower);
+        const matchesFilter = filterStatus === "all" || train.status === filterStatus;
+
+        if (matchesSearch && matchesFilter) {
+          acc.filteredTrains.push(train);
+        }
+
+        return acc;
+      },
+      {
+        filteredTrains: [] as typeof trains,
+        stats: { activeTrains: 0, maintenanceTrains: 0, totalCapacity: 0, totalOccupancy: 0 }
+      }
+    );
+  }, [trains, searchTerm, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,7 +130,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Trains</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {trains.filter(t => t.status === "Active").length}
+                  {stats.activeTrains}
                 </p>
               </div>
             </div>
@@ -121,7 +144,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Maintenance</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {trains.filter(t => t.status === "Maintenance").length}
+                  {stats.maintenanceTrains}
                 </p>
               </div>
             </div>
@@ -135,7 +158,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Capacity</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {trains.reduce((sum, train) => sum + train.capacity, 0).toLocaleString()}
+                  {stats.totalCapacity.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -149,7 +172,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg Occupancy</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {Math.round(trains.reduce((sum, train) => sum + train.occupancy, 0) / trains.length)}%
+                  {trains.length ? Math.round(stats.totalOccupancy / trains.length) : 0}%
                 </p>
               </div>
             </div>
