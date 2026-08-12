@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,6 @@ import { useTrainStatus } from "@/hooks/useTrainStatus";
 
 const TrainStatus = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredTrains, setFilteredTrains] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("all");
   const { trains, loading } = useTrainStatus();
   const [params] = useSearchParams();
@@ -31,36 +30,49 @@ const TrainStatus = () => {
   };
   
   // Filter trains from hook based on search and active tab
-  useEffect(() => {
-    const list = (trains || []).map((t: any) => ({
-      id: String(t.id),
-      trainNumber: String(t.id),
-      trainName: String(t.name || ""),
-      origin: String(t.from || ""),
-      destination: String(t.to || ""),
-      departureTime: String(t.departure || "-"),
-      arrivalTime: String(t.arrival || "-"),
-      status: mapStatusToCard(t.status),
-      delay: typeof t.delay === 'number' ? t.delay : undefined,
-      platform: t.platform ? String(t.platform) : undefined,
-      progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
-      nextStation: t.nextStation,
-    }));
-
+  // ⚡ Bolt Performance Optimization:
+  // 💡 What: Replaced useEffect derived state with useMemo, and consolidated chained .map().filter().filter() into a single .reduce() pass.
+  // 🎯 Why: Derived state in useEffect causes unnecessary double re-renders. Multiple array passes waste CPU cycles and create intermediate arrays.
+  // 📊 Impact: Eliminates 1 unnecessary render cycle per search/tab change, and reduces array iteration from O(3N) to O(N).
+  const filteredTrains = useMemo(() => {
     const query = searchQuery.toLowerCase();
-    let results = list.filter((train) =>
-      !query ||
-      train.trainNumber.toLowerCase().includes(query) ||
-      train.trainName.toLowerCase().includes(query) ||
-      train.origin.toLowerCase().includes(query) ||
-      train.destination.toLowerCase().includes(query)
-    );
 
-    if (activeTab !== "all") {
-      results = results.filter((train) => train.status === activeTab);
-    }
+    return (trains || []).reduce((acc: any[], t: any) => {
+      const status = mapStatusToCard(t.status);
 
-    setFilteredTrains(results);
+      if (activeTab !== "all" && status !== activeTab) {
+        return acc;
+      }
+
+      const trainNumber = String(t.id);
+      const trainName = String(t.name || "");
+      const origin = String(t.from || "");
+      const destination = String(t.to || "");
+
+      if (!query ||
+          trainNumber.toLowerCase().includes(query) ||
+          trainName.toLowerCase().includes(query) ||
+          origin.toLowerCase().includes(query) ||
+          destination.toLowerCase().includes(query)) {
+
+        acc.push({
+          id: trainNumber,
+          trainNumber,
+          trainName,
+          origin,
+          destination,
+          departureTime: String(t.departure || "-"),
+          arrivalTime: String(t.arrival || "-"),
+          status,
+          delay: typeof t.delay === 'number' ? t.delay : undefined,
+          platform: t.platform ? String(t.platform) : undefined,
+          progress: typeof t.progress === 'number' ? t.progress : (t.status === 'Arrived' ? 100 : t.status === 'Boarding' ? 0 : 50),
+          nextStation: t.nextStation,
+        });
+      }
+
+      return acc;
+    }, []);
   }, [searchQuery, activeTab, trains]);
   
   const handleSearch = (e: React.FormEvent) => {
