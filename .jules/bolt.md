@@ -1,0 +1,3 @@
+## 2024-05-14 - PriorityTicketManagement Anti-Pattern
+**Learning:** The `PriorityTicketManagement` component performs four O(N) array passes on every render (one for filtering, and three for status counts: Pending, Approved, Rejected). This is a codebase-specific anti-pattern seen in other components. It recalculates derived state redundantly on every render, and performs `.toLowerCase()` checks inside the loop repeatedly.
+**Action:** Consolidate these multiple `.filter()` and `.length` passes into a single `.reduce()` pass wrapped in `useMemo`, and hoist the repeated string `.toLowerCase()` outside the loop.
