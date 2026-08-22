@@ -1,0 +1,3 @@
+## 2024-11-20 - [Optimize TicketManagement and PassengerDashboard stats computation]
+**Learning:** Found an anti-pattern in `TicketManagement.tsx` and `PassengerDashboard.tsx` where multiple array traversals and `array.filter(condition).length` combined with `.sort()` were used aggressively to aggregate dashboard stats inside renders.
+**Action:** Always check React dashboard components for chained `.filter()`, `.map()`, and `.length` patterns. Consolidate these into single `.reduce()` or `for-loop` passes within a `useMemo` hook, and hoist static maps (like `STATIONS_BY_CODE`) outside the render cycle. O(N log N) sorting for min/max items can often be simplified to O(N) linear scans.
