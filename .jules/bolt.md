@@ -1,0 +1,6 @@
+## 2024-11-20 - [Optimize TicketManagement and PassengerDashboard stats computation]
+**Learning:** Found an anti-pattern in `TicketManagement.tsx` and `PassengerDashboard.tsx` where multiple array traversals and `array.filter(condition).length` combined with `.sort()` were used aggressively to aggregate dashboard stats inside renders.
+**Action:** Always check React dashboard components for chained `.filter()`, `.map()`, and `.length` patterns. Consolidate these into single `.reduce()` or `for-loop` passes within a `useMemo` hook, and hoist static maps (like `STATIONS_BY_CODE`) outside the render cycle. O(N log N) sorting for min/max items can often be simplified to O(N) linear scans.
+## 2024-11-20 - [Fix Netlify CI generic deploy failures]
+**Learning:** Netlify CI for Vite SPAs sometimes fails silently or with generic "Deploy failed", "Header rules", or "Redirect rules" messages due to missing routing instructions or unresolved Rollup chunk size limits during `npm run build`.
+**Action:** Add `netlify.toml` for standard SPA fallback routing and configure `build.rollupOptions.output.manualChunks` in `vite.config.ts` to aggressively split large vendor code when these generic CI failures occur.
