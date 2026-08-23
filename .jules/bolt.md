@@ -1,0 +1,3 @@
+## 2024-11-20 - [FoodOrdering Cart & Filter Optimization]
+**Learning:** Found a performance bottleneck in `src/pages/FoodOrdering.tsx` where nested array iteration occurred on every render: `menu.filter(item => item.category === category)` logic inside a render map for categories (which creates O(N * C) complexity), and three separate `cart.reduce` operations triggering on render to calculate amounts and item counts.
+**Action:** Consolidate multiple iterative passes into single-pass `.reduce()` blocks wrapped in `useMemo`, and hoist the O(N * C) array filtering out of the render loop by creating a precomputed `Map` (or Record object) lookup (`menuByCategory`) inside a `useMemo` block to achieve O(N) complexity during rendering.
