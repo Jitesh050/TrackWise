@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ const TrainManagement = () => {
   const [filterStatus, setFilterStatus] = useState("all");
 
   // Mock data - in real app, this would come from API
-  const trains = [
+  const trains = useMemo(() => [
     {
       id: "1",
       trainNumber: "12345",
@@ -59,15 +59,39 @@ const TrainManagement = () => {
       estimatedArrival: "16:45",
       occupancy: 0
     }
-  ];
+  ], []);
 
-  const filteredTrains = trains.filter(train => {
-    const matchesSearch = train.trainName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.trainNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.route.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || train.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const { filteredTrains, activeTrainsCount, maintenanceTrainsCount, totalCapacity, totalOccupancy } = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+
+    return trains.reduce((acc, train) => {
+      // Calculate Stats
+      if (train.status === "Active") acc.activeTrainsCount++;
+      if (train.status === "Maintenance") acc.maintenanceTrainsCount++;
+      acc.totalCapacity += train.capacity;
+      acc.totalOccupancy += train.occupancy;
+
+      // Filter list
+      const matchesSearch = train.trainName.toLowerCase().includes(searchLower) ||
+                           train.trainNumber.toLowerCase().includes(searchLower) ||
+                           train.route.toLowerCase().includes(searchLower);
+      const matchesFilter = filterStatus === "all" || train.status === filterStatus;
+
+      if (matchesSearch && matchesFilter) {
+        acc.filteredTrains.push(train);
+      }
+
+      return acc;
+    }, {
+      filteredTrains: [] as typeof trains,
+      activeTrainsCount: 0,
+      maintenanceTrainsCount: 0,
+      totalCapacity: 0,
+      totalOccupancy: 0
+    });
+  }, [trains, searchTerm, filterStatus]);
+
+  const avgOccupancyCalculated = trains.length > 0 ? Math.round(totalOccupancy / trains.length) : 0;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,7 +131,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Trains</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {trains.filter(t => t.status === "Active").length}
+                  {activeTrainsCount}
                 </p>
               </div>
             </div>
@@ -121,7 +145,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Maintenance</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {trains.filter(t => t.status === "Maintenance").length}
+                  {maintenanceTrainsCount}
                 </p>
               </div>
             </div>
@@ -135,7 +159,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Capacity</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {trains.reduce((sum, train) => sum + train.capacity, 0).toLocaleString()}
+                  {totalCapacity.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -149,7 +173,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg Occupancy</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {Math.round(trains.reduce((sum, train) => sum + train.occupancy, 0) / trains.length)}%
+                  {avgOccupancyCalculated}%
                 </p>
               </div>
             </div>
