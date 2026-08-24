@@ -1,3 +1,9 @@
 ## 2024-08-24 - Array Iteration Consolidation in TrainManagement
 **Learning:** React components (like TrainManagement, UserManagement, TicketManagement) in this codebase frequently use an anti-pattern of running multiple O(N) `array.filter(condition).length` passes inside the render function to generate numerical statistics, followed by a final array filter for rendering lists.
 **Action:** Consolidate these separate O(N) stat counting and filtering passes into a single `.reduce()` pass wrapped in a `useMemo` hook to reduce computational overhead. Hoist string normalizations (e.g., `searchTerm.toLowerCase()`) outside the loop to further optimize the pass. Never hoist mock state arrays (like `trains`) completely out of the component, as they logically represent stateful data; instead, wrap their initialization in `useMemo` if necessary.
+
+## 2024-08-24 - Netlify CI Failures with Vite SPAs
+**Learning:** Netlify deployments for Vite Single Page Applications (SPAs) will silently fail or throw generic errors like "Deploy failed", "Header rules", or "Redirect rules" if the build configuration is missing proper chunk-splitting or SPA redirect rules. Vite's default 500kB chunk limit often flags warnings for large dependencies like Firebase, which can also trigger Netlify CI failures.
+**Action:** When these specific CI failures occur, immediately:
+1. Create a `netlify.toml` file with explicit `[build]` (`publish="dist"`, `command="npm run build"`) and `[[redirects]]` (`from="/*"`, `to="/index.html"`, `status=200`) blocks.
+2. In `vite.config.ts`, implement `build.rollupOptions.output.manualChunks` using specific string inclusion checks (e.g., `id.includes('node_modules/firebase/')`) to extract large libraries into distinct vendor chunks, and optionally raise the `chunkSizeWarningLimit` to 1000.
