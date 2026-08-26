@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -7,19 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Search, MessageCircle, Phone, Mail, HelpCircle, Send } from "lucide-react";
 
-const HelpCenter = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [chatMessage, setChatMessage] = useState("");
-  const [chatHistory, setChatHistory] = useState<Array<{id: string, message: string, sender: 'user' | 'bot', timestamp: Date}>>([
-    {
-      id: '1',
-      message: "Hello! I'm TrackWise Assistant. How can I help you today?",
-      sender: 'bot',
-      timestamp: new Date()
-    }
-  ]);
-
-  const faqs = [
+const faqs = [
     {
       question: "How do I book a ticket online?",
       answer: "To book a ticket online, go to the 'Book Ticket' section, enter your journey details including origin, destination, date, and number of passengers. Select your preferred train and class, then proceed to seat selection and payment."
@@ -45,6 +33,20 @@ const HelpCenter = () => {
       answer: "Economy class: 20kg, Business class: 30kg, First class: 40kg. Additional charges apply for excess baggage. Prohibited items include flammable substances, weapons, and hazardous materials."
     }
   ];
+
+const HelpCenter = () => {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [chatMessage, setChatMessage] = useState("");
+  const [chatHistory, setChatHistory] = useState<Array<{id: string, message: string, sender: 'user' | 'bot', timestamp: Date}>>([
+    {
+      id: '1',
+      message: "Hello! I'm TrackWise Assistant. How can I help you today?",
+      sender: 'bot',
+      timestamp: new Date()
+    }
+  ]);
+
+
 
   const handleChatSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,10 +75,16 @@ const HelpCenter = () => {
     setChatMessage("");
   };
 
-  const filteredFaqs = faqs.filter(faq => 
-    faq.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    faq.answer.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // ⚡ Bolt: Memoized filter operation to prevent O(N) recalculations on every render
+  // and hoisted searchQuery.toLowerCase() outside the filter loop
+  const filteredFaqs = useMemo(() => {
+    if (!searchQuery) return faqs;
+    const query = searchQuery.toLowerCase();
+    return faqs.filter(faq =>
+      faq.question.toLowerCase().includes(query) ||
+      faq.answer.toLowerCase().includes(query)
+    );
+  }, [searchQuery]);
 
   return (
     <div className="container mx-auto space-y-8 pb-10 animate-enter">

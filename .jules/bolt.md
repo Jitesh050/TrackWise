@@ -1,0 +1,3 @@
+## 2024-10-18 - [HelpCenter Component Performance]
+**Learning:** Found a common anti-pattern where a static array of mock data (FAQs) is initialized inside the render function of a React component, causing it to be re-allocated on every render. Additionally, filtering the array based on state (search query) without memoization results in O(N) recalculations on unrelated state updates (like typing into a chat box).
+**Action:** Always hoist static data arrays outside the component definition if they don't depend on props/state. Wrap derived data calculations (like `.filter()`) in a `useMemo` hook, and extract redundant inner-loop computations (like `.toLowerCase()`) before the loop.
