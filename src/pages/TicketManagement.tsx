@@ -45,7 +45,7 @@ const TicketManagement = () => {
   const { filteredTickets, confirmedCount, waitingCount, cancelledCount } = useMemo(() => {
     const term = searchTerm.toLowerCase();
 
-    return tickets.reduce(
+    return tickets.reduce<{ filteredTickets: TicketRecord[], confirmedCount: number, waitingCount: number, cancelledCount: number }>(
       (acc, ticket) => {
         // Count stats
         if (ticket.status === "Confirmed") acc.confirmedCount++;
@@ -65,7 +65,7 @@ const TicketManagement = () => {
 
         return acc;
       },
-      { filteredTickets: [] as TicketRecord[], confirmedCount: 0, waitingCount: 0, cancelledCount: 0 }
+      { filteredTickets: [], confirmedCount: 0, waitingCount: 0, cancelledCount: 0 }
     );
   }, [tickets, searchTerm, filterStatus]);
 
