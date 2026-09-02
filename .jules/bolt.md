@@ -1,0 +1,3 @@
+## 2024-05-14 - Redundant Array Traversal in React Render
+**Learning:** This codebase frequently employs an anti-pattern where components perform multiple independent O(N) `.filter().length` passes over the same array to calculate distinct categorical statistics during every render cycle.
+**Action:** Always scan for unmemoized `.filter()` or `.reduce()` passes occurring directly inside the component body. Consolidate them into a single-pass `reduce` inside a `useMemo` block to minimize computational complexity from O(K*N) to O(N) and prevent unnecessary recalculations on unrelated state updates.
