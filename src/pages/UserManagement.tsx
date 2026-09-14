@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,55 +18,81 @@ import {
   Activity
 } from "lucide-react";
 
+
+// Mock data - in real app, this would come from API
+const STATIC_USERS = [
+  {
+    id: "1",
+    name: "John Doe",
+    email: "john.doe@example.com",
+    phone: "+91 98765 43210",
+    role: "user",
+    status: "active",
+    joinDate: "2024-01-15",
+    lastLogin: "2024-01-20 14:30",
+    totalBookings: 12
+  },
+  {
+    id: "2",
+    name: "Jane Smith",
+    email: "jane.smith@example.com",
+    phone: "+91 98765 43211",
+    role: "admin",
+    status: "active",
+    joinDate: "2024-01-10",
+    lastLogin: "2024-01-20 16:45",
+    totalBookings: 0
+  },
+  {
+    id: "3",
+    name: "Mike Johnson",
+    email: "mike.johnson@example.com",
+    phone: "+91 98765 43212",
+    role: "user",
+    status: "inactive",
+    joinDate: "2024-01-05",
+    lastLogin: "2024-01-15 09:20",
+    totalBookings: 5
+  }
+];
+
+
+// ⚡ Bolt Optimization: Extracted stats calculation outside the component to run exactly once at module load time.
+// Prevents O(3N) array iterations on every component render.
+const INITIAL_STATS = STATIC_USERS.reduce((acc, user) => {
+  if (user.role === "admin") acc.admins++;
+  if (user.status === "active") acc.active++;
+  if (user.role === "user") acc.regular++;
+  return acc;
+}, { admins: 0, active: 0, regular: 0 });
+
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
 
-  // Mock data - in real app, this would come from API
-  const users = [
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "+91 98765 43210",
-      role: "user",
-      status: "active",
-      joinDate: "2024-01-15",
-      lastLogin: "2024-01-20 14:30",
-      totalBookings: 12
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      phone: "+91 98765 43211",
-      role: "admin",
-      status: "active",
-      joinDate: "2024-01-10",
-      lastLogin: "2024-01-20 16:45",
-      totalBookings: 0
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike.johnson@example.com",
-      phone: "+91 98765 43212",
-      role: "user",
-      status: "inactive",
-      joinDate: "2024-01-05",
-      lastLogin: "2024-01-15 09:20",
-      totalBookings: 5
-    }
-  ];
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone.includes(searchTerm);
-    const matchesFilter = filterRole === "all" || user.role === filterRole;
-    return matchesSearch && matchesFilter;
-  });
 
+  // ⚡ Bolt Optimization: Memoized the filtered list to prevent unnecessary re-computations when state unrelated to filtering changes.
+  const filteredUsers = useMemo(() => {
+    // ⚡ Bolt Optimization: Hoisted toLowerCase() outside the loop to prevent redundant string allocations per user.
+    const searchLower = searchTerm.toLowerCase();
+
+    return STATIC_USERS.reduce((acc, user) => {
+      // Filter list
+      const matchesSearch =
+        user.name.toLowerCase().includes(searchLower) ||
+        user.email.toLowerCase().includes(searchLower) ||
+        user.phone.includes(searchTerm);
+
+      const matchesFilter = filterRole === "all" || user.role === filterRole;
+
+      if (matchesSearch && matchesFilter) {
+        acc.push(user);
+      }
+
+      return acc;
+    }, [] as typeof STATIC_USERS);
+  }, [searchTerm, filterRole]);
   const getRoleBadge = (role: string) => {
     switch (role) {
       case "admin":
@@ -113,7 +139,7 @@ const UserManagement = () => {
               <Users className="h-4 w-4 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-blue-600">{users.length}</p>
+                <p className="text-2xl font-bold text-blue-600">{STATIC_USERS.length}</p>
               </div>
             </div>
           </CardContent>
@@ -126,7 +152,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Admins</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {users.filter(u => u.role === "admin").length}
+                  {INITIAL_STATS.admins}
                 </p>
               </div>
             </div>
@@ -140,7 +166,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Users</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {users.filter(u => u.status === "active").length}
+                  {INITIAL_STATS.active}
                 </p>
               </div>
             </div>
@@ -154,7 +180,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Regular Users</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {users.filter(u => u.role === "user").length}
+                  {INITIAL_STATS.regular}
                 </p>
               </div>
             </div>
