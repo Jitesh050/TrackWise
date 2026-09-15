@@ -24,6 +24,20 @@ import { useAuth } from "@/hooks/useAuth";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 
+const PASSENGER_FEATURES = [
+  { icon: Clock, title: "Live Train Status", description: "Real-time tracking & updates", color: "text-blue-600" },
+  { icon: QrCode, title: "QR Ticket Booking", description: "Contactless digital tickets", color: "text-green-600" },
+  { icon: MapPin, title: "Trip Planner", description: "Hotels & local attractions", color: "text-orange-600" },
+  { icon: Star, title: "Priority Access", description: "Skip queues & fast-track", color: "text-yellow-600" },
+  { icon: CreditCard, title: "Secure Payments", description: "Multiple payment options", color: "text-indigo-600" }
+];
+
+const ADMIN_FEATURES = [
+  { icon: AlertTriangle, title: "Collision Detection", description: "AI-powered safety monitoring", color: "text-red-600" },
+  { icon: Users, title: "Crowd Analytics", description: "Real-time density tracking", color: "text-teal-600" },
+  { icon: Zap, title: "Energy Control", description: "Smart grid optimization", color: "text-amber-600" }
+];
+
 const WelcomePage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,19 +82,7 @@ const WelcomePage = () => {
     }, 0);
   };
 
-  const passengerFeatures = [
-    { icon: Clock, title: "Live Train Status", description: "Real-time tracking & updates", color: "text-blue-600" },
-    { icon: QrCode, title: "QR Ticket Booking", description: "Contactless digital tickets", color: "text-green-600" },
-    { icon: MapPin, title: "Trip Planner", description: "Hotels & local attractions", color: "text-orange-600" },
-    { icon: Star, title: "Priority Access", description: "Skip queues & fast-track", color: "text-yellow-600" },
-    { icon: CreditCard, title: "Secure Payments", description: "Multiple payment options", color: "text-indigo-600" }
-  ];
 
-  const adminFeatures = [
-    { icon: AlertTriangle, title: "Collision Detection", description: "AI-powered safety monitoring", color: "text-red-600" },
-    { icon: Users, title: "Crowd Analytics", description: "Real-time density tracking", color: "text-teal-600" },
-    { icon: Zap, title: "Energy Control", description: "Smart grid optimization", color: "text-amber-600" }
-  ];
 
   return (
     <div className="min-h-screen gradient-bg">
@@ -201,7 +203,7 @@ const WelcomePage = () => {
                   </div>
                 </div>
                 <div className="grid md:grid-cols-2 gap-4">
-                  {passengerFeatures.map((feature, index) => (
+                  {PASSENGER_FEATURES.map((feature, index) => (
                     <div key={index} className="group p-4 bg-card/50 rounded-xl border border-border/50 hover:bg-card hover:shadow-lg transition-all duration-300">
                       <div className="flex items-start gap-4">
                         <div className="p-2 bg-muted/50 rounded-lg group-hover:scale-110 transition-transform">
@@ -229,7 +231,7 @@ const WelcomePage = () => {
                   </div>
                 </div>
                 <div className="grid md:grid-cols-3 gap-4">
-                  {adminFeatures.map((feature, index) => (
+                  {ADMIN_FEATURES.map((feature, index) => (
                     <div key={index} className="group p-4 bg-card/50 rounded-xl border border-border/50 hover:bg-card hover:shadow-lg transition-all duration-300">
                       <div className="text-center">
                         <div className="inline-flex p-3 bg-muted/50 rounded-lg mb-3 group-hover:scale-110 transition-transform">
