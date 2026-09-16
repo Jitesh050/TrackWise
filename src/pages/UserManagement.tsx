@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,54 +18,70 @@ import {
   Activity
 } from "lucide-react";
 
+// Mock data - in real app, this would come from API
+const STATIC_USERS = [
+  {
+    id: "1",
+    name: "John Doe",
+    email: "john.doe@example.com",
+    phone: "+91 98765 43210",
+    role: "user",
+    status: "active",
+    joinDate: "2024-01-15",
+    lastLogin: "2024-01-20 14:30",
+    totalBookings: 12
+  },
+  {
+    id: "2",
+    name: "Jane Smith",
+    email: "jane.smith@example.com",
+    phone: "+91 98765 43211",
+    role: "admin",
+    status: "active",
+    joinDate: "2024-01-10",
+    lastLogin: "2024-01-20 16:45",
+    totalBookings: 0
+  },
+  {
+    id: "3",
+    name: "Mike Johnson",
+    email: "mike.johnson@example.com",
+    phone: "+91 98765 43212",
+    role: "user",
+    status: "inactive",
+    joinDate: "2024-01-05",
+    lastLogin: "2024-01-15 09:20",
+    totalBookings: 5
+  }
+];
+
 const UserManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState("all");
 
-  // Mock data - in real app, this would come from API
-  const users = [
-    {
-      id: "1",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      phone: "+91 98765 43210",
-      role: "user",
-      status: "active",
-      joinDate: "2024-01-15",
-      lastLogin: "2024-01-20 14:30",
-      totalBookings: 12
-    },
-    {
-      id: "2",
-      name: "Jane Smith",
-      email: "jane.smith@example.com",
-      phone: "+91 98765 43211",
-      role: "admin",
-      status: "active",
-      joinDate: "2024-01-10",
-      lastLogin: "2024-01-20 16:45",
-      totalBookings: 0
-    },
-    {
-      id: "3",
-      name: "Mike Johnson",
-      email: "mike.johnson@example.com",
-      phone: "+91 98765 43212",
-      role: "user",
-      status: "inactive",
-      joinDate: "2024-01-05",
-      lastLogin: "2024-01-15 09:20",
-      totalBookings: 5
-    }
-  ];
+  const users = useMemo(() => STATIC_USERS, []);
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.phone.includes(searchTerm);
-    const matchesFilter = filterRole === "all" || user.role === filterRole;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredUsers = useMemo(() => {
+    const searchLower = searchTerm.toLowerCase();
+    return users.filter(user => {
+      const matchesSearch = user.name.toLowerCase().includes(searchLower) ||
+                           user.email.toLowerCase().includes(searchLower) ||
+                           user.phone.includes(searchTerm);
+      const matchesFilter = filterRole === "all" || user.role === filterRole;
+      return matchesSearch && matchesFilter;
+    });
+  }, [searchTerm, filterRole, users]);
+
+  // Consolidate multiple O(N) array filter().length passes into a single pass
+  const stats = useMemo(() => {
+    return users.reduce((acc, user) => {
+      acc.total += 1;
+      if (user.role === "admin") acc.admins += 1;
+      if (user.status === "active") acc.active += 1;
+      if (user.role === "user") acc.regular += 1;
+      return acc;
+    }, { total: 0, admins: 0, active: 0, regular: 0 });
+  }, [users]);
 
   const getRoleBadge = (role: string) => {
     switch (role) {
@@ -113,7 +129,7 @@ const UserManagement = () => {
               <Users className="h-4 w-4 text-blue-600" />
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Users</p>
-                <p className="text-2xl font-bold text-blue-600">{users.length}</p>
+                <p className="text-2xl font-bold text-blue-600">{stats.total}</p>
               </div>
             </div>
           </CardContent>
@@ -126,7 +142,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Admins</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {users.filter(u => u.role === "admin").length}
+                  {stats.admins}
                 </p>
               </div>
             </div>
@@ -140,7 +156,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Users</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {users.filter(u => u.status === "active").length}
+                  {stats.active}
                 </p>
               </div>
             </div>
@@ -154,7 +170,7 @@ const UserManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Regular Users</p>
                 <p className="text-2xl font-bold text-orange-600">
-                  {users.filter(u => u.role === "user").length}
+                  {stats.regular}
                 </p>
               </div>
             </div>
