@@ -1,3 +1,3 @@
-## 2024-05-19 - UseMemo over derived state in TrainStatus
-**Learning:** The `TrainStatus` component previously used `useEffect` to derive `filteredTrains` state from `trains`, `searchQuery`, and `activeTab`. This is a React anti-pattern that causes double renders (one for the dependency change, one for the subsequent `setFilteredTrains`).
-**Action:** Replace derived state maintained in `useState`/`useEffect` with synchronous `useMemo` blocks to prevent unnecessary render cycles, and use `.reduce()` to consolidate multiple mapping and filtering passes into a single O(N) iteration.
+## 2024-05-18 - PassengerDashboard Performance Refactor
+**Learning:** React components containing multiple chained array operations (`filter`, `map`, `reduce`, `sort`) that re-run on every render are a severe bottleneck when those arrays hold dynamic API data. Furthermore, recreating static lookup maps (e.g. `const byCode = new Map()`) inside a component creates unnecessary O(S) time/space overhead per render.
+**Action:** Always look for chained array passes. Consolidate them into a single pass (like a `for` loop or `reduce`), wrap them in `useMemo` so they only calculate when dependencies change, and aggressively hoist static definitions (like reference maps) outside of the component.
