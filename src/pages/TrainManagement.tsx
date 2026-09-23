@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +22,7 @@ const TrainManagement = () => {
   const [filterStatus, setFilterStatus] = useState("all");
 
   // Mock data - in real app, this would come from API
-  const trains = [
+  const trains = useMemo(() => [
     {
       id: "1",
       trainNumber: "12345",
@@ -59,15 +59,28 @@ const TrainManagement = () => {
       estimatedArrival: "16:45",
       occupancy: 0
     }
-  ];
+  ], []);
 
-  const filteredTrains = trains.filter(train => {
-    const matchesSearch = train.trainName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.trainNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         train.route.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === "all" || train.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  const stats = useMemo(() => {
+    return trains.reduce((acc, train) => {
+      if (train.status === "Active") acc.active++;
+      if (train.status === "Maintenance") acc.maintenance++;
+      acc.capacity += train.capacity;
+      acc.occupancy += train.occupancy;
+      return acc;
+    }, { active: 0, maintenance: 0, capacity: 0, occupancy: 0 });
+  }, [trains]);
+
+  const filteredTrains = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+    return trains.filter(train => {
+      const matchesSearch = train.trainName.toLowerCase().includes(lowerSearch) ||
+                           train.trainNumber.toLowerCase().includes(lowerSearch) ||
+                           train.route.toLowerCase().includes(lowerSearch);
+      const matchesFilter = filterStatus === "all" || train.status === filterStatus;
+      return matchesSearch && matchesFilter;
+    });
+  }, [trains, searchTerm, filterStatus]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -107,7 +120,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Active Trains</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {trains.filter(t => t.status === "Active").length}
+                  {stats.active}
                 </p>
               </div>
             </div>
@@ -121,7 +134,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Maintenance</p>
                 <p className="text-2xl font-bold text-yellow-600">
-                  {trains.filter(t => t.status === "Maintenance").length}
+                  {stats.maintenance}
                 </p>
               </div>
             </div>
@@ -135,7 +148,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Total Capacity</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {trains.reduce((sum, train) => sum + train.capacity, 0).toLocaleString()}
+                  {stats.capacity.toLocaleString()}
                 </p>
               </div>
             </div>
@@ -149,7 +162,7 @@ const TrainManagement = () => {
               <div>
                 <p className="text-sm font-medium text-gray-600">Avg Occupancy</p>
                 <p className="text-2xl font-bold text-purple-600">
-                  {Math.round(trains.reduce((sum, train) => sum + train.occupancy, 0) / trains.length)}%
+                  {trains.length > 0 ? Math.round(stats.occupancy / trains.length) : 0}%
                 </p>
               </div>
             </div>
