@@ -21,9 +21,13 @@ import {
   Calendar
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ticketsApi, TicketRecord } from "@/lib/tickets";
 import { stations, calculateDistance } from "@/lib/stationData";
+
+// Hoist station lookup map outside the component to prevent reallocation per render
+const STATIONS_BY_CODE = new Map(stations.map(s => [s.id.toUpperCase(), s]));
 
 const PassengerDashboard = () => {
   const navigate = useNavigate();
@@ -36,32 +40,44 @@ const PassengerDashboard = () => {
     staleTime: 15_000,
   });
 
-  const activeBookings = tickets.filter(t => t.status === "Confirmed").length;
+  // ⚡ Bolt: Consolidate multiple O(N) array passes into a single pass wrapped in useMemo
+  // Also using hoisted STATIONS_BY_CODE to prevent O(S) allocation per render
+  const stats = useMemo(() => {
+    const active = tickets.filter(t => t.status === "Confirmed");
+
+    let nextJourneyTime = Infinity;
+    let nextJourneyStr = "No upcoming";
+    let kmTotal = 0;
+
+    for (const t of active) {
+      // Calculate miles
+      const from = STATIONS_BY_CODE.get(String(t.from || '').toUpperCase());
+      const to = STATIONS_BY_CODE.get(String(t.to || '').toUpperCase());
+      if (from && to) {
+        kmTotal += calculateDistance(from.lat, from.lon, to.lat, to.lon);
+      }
+
+      // Calculate next journey
+      const time = Date.parse(t.date + (t.departureTime ? " " + t.departureTime : "")) || Date.parse(t.date);
+      if (!isNaN(time) && time >= Date.now() && time < nextJourneyTime) {
+        nextJourneyTime = time;
+      }
+    }
+
+    if (nextJourneyTime !== Infinity) {
+      nextJourneyStr = new Date(nextJourneyTime).toLocaleString();
+    }
+
+    return {
+      activeBookings: active.length,
+      nextJourney: nextJourneyStr,
+      milesTraveled: Math.round(kmTotal * 0.621371)
+    };
+  }, [tickets]);
+
+  const { activeBookings, nextJourney, milesTraveled } = stats;
   const hasBookings = (tickets || []).length > 0;
   const latestPnr = hasBookings ? (tickets[0]?.pnr || "") : "";
-  const nextJourney = (() => {
-    const withDate = tickets
-      .map(t => ({ t, time: Date.parse(t.date + (t.departureTime ? " " + t.departureTime : "")) || Date.parse(t.date) }))
-      .filter(x => !isNaN(x.time) && x.time >= Date.now())
-      .sort((a,b) => a.time - b.time);
-    if (withDate.length === 0) return "No upcoming";
-    const d = new Date(withDate[0].time);
-    return d.toLocaleString();
-  })();
-  const milesTraveled = (() => {
-    // Build quick lookup of station by code
-    const byCode = new Map(stations.map(s => [s.id.toUpperCase(), s]));
-    const kmTotal = (tickets || [])
-      .filter(t => t.status === "Confirmed")
-      .reduce((sum, t) => {
-        const from = byCode.get(String(t.from || '').toUpperCase());
-        const to = byCode.get(String(t.to || '').toUpperCase());
-        if (!from || !to) return sum;
-        const km = calculateDistance(from.lat, from.lon, to.lat, to.lon);
-        return sum + km;
-      }, 0);
-    return Math.round(kmTotal * 0.621371); // convert to miles
-  })();
 
   const handleFeatureClick = (route: string) => {
     navigate(route);
